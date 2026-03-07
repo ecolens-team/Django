@@ -1,0 +1,4 @@
+Django>=4.2,<5.0
+djangorestframework
+psycopg2-binary  # Required for PostgreSQL
+django-cors-headers # CRITICAL: Allows React to talk to Django
