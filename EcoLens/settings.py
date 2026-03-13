@@ -28,14 +28,16 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
-
-
 AUTH_USER_MODEL = 'users.User'
 
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'dj_rest_auth.jwt_auth.JWTCookieAuthentication', 
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -51,6 +53,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "django.contrib.sites",
+    "allauth",
+    "allauth.account",
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'dj_rest_auth',
+    'rest_framework.authtoken',
+    'dj_rest_auth.registration',
     'corsheaders',
     'rest_framework',
     'users'
@@ -64,8 +74,40 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    "allauth.account.middleware.AccountMiddleware",
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+SITE_ID = 1
+
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+
+PASSWORD_RESET_USE_SITES_DOMAIN = False
+PASSWORD_RESET_CONFIRM_URL = "reset-password/{uid}/{token}"
+
+REST_AUTH = {
+    'USE_JWT': True,
+    'JWT_AUTH_COOKIE': 'jwt-auth',
+    'JWT_AUTH_REFRESH_COOKIE': 'jwt-refresh-token',
+    'JWT_AUTH_HTTPONLY': False, 
+    'REGISTER_SERIALIZER': "users.serializers.CustomRegisterSerializer",
+    "USER_DETAILS_SERIALIZER": "users.serializers.CustomUserDetailsSerializer",
+}
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "noreply@ecolens.local"
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+    "SCOPE": ["profile", "email"],
+    "AUTH_PARAMS": {
+        "access_type": "online",
+    },
+    "OAUTH_PKCE_ENABLED": True,
+    }
+}
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
@@ -141,3 +183,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

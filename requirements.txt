@@ -1,6 +1,19 @@
-Django>=4.2,<5.0
+Django
 djangorestframework
 psycopg2-binary  
 django-cors-headers 
 pillow
 djangorestframework-simplejwt
+dj-rest-auth[with-social]
+
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
+open_clip_torch
+numpy
+huggingface_hub
+
+pytest
+pytest-django
+bandit
+ruff

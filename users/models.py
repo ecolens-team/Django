@@ -13,6 +13,11 @@ class User(AbstractUser):
     phone_number = models.CharField(max_length=20, null=True)
     profile_picture = models.ImageField(blank=True, null=True, upload_to='profiles/')
 
+    def save(self, *args, **kwargs):
+        if self.role == 'ADMIN':
+            self.is_staff = True
+        super().save(*args, **kwargs)
+    
     def __str__(self):
         return f"{self.username} - {self.role}"
     
