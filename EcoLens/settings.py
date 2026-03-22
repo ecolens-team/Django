@@ -63,7 +63,9 @@ INSTALLED_APPS = [
     'dj_rest_auth.registration',
     'corsheaders',
     'rest_framework',
-    'users'
+    'users',
+    'observations',
+    'gamification'
 ]
 
 MIDDLEWARE = [
@@ -81,8 +83,7 @@ MIDDLEWARE = [
 SITE_ID = 1
 
 ACCOUNT_EMAIL_VERIFICATION = 'none'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 
 PASSWORD_RESET_USE_SITES_DOMAIN = False
 PASSWORD_RESET_CONFIRM_URL = "reset-password/{uid}/{token}"
@@ -110,7 +111,13 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
+    "http://localhost:3000",
+]
+
+CORS_ALLOW_CREDENTIALS = True 
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
 ]
 
 ROOT_URLCONF = 'EcoLens.urls'
