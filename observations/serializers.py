@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Observation, Species, Image
+from users.serializers import CustomUserDetailsSerializer
 
 class SpeciesSerializer(serializers.ModelSerializer):
     class Meta:
@@ -13,6 +14,8 @@ class ImageSerializer(serializers.ModelSerializer):
 
 class ObservationSerializer(serializers.ModelSerializer):
     images = ImageSerializer(many=True, read_only=True) 
+    species = SpeciesSerializer(read_only=True)
+    user = CustomUserDetailsSerializer(read_only=True)
 
     class Meta:
         model = Observation

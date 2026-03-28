@@ -17,3 +17,7 @@ pytest
 pytest-django
 bandit
 ruff
+
+django-storages 
+boto3
+python-dotenv
