@@ -1,13 +1,14 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import TemplateView
-from observations.views import SpeciesDetailView, SpeciesListView
+from observations.views import PredictSpeciesView, SpeciesDetailView, SpeciesListView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("users.urls")), 
     path("api/observations/", include("observations.urls")),
     path("api/species/", SpeciesListView.as_view(), name="species"),
+    path("api/species/predict/", PredictSpeciesView.as_view(), name="predict"),
     path("api/quests/", include("gamification.urls")),
     path("api/species/<int:pk>", SpeciesDetailView.as_view(), name="species-detail"),
     path("accounts/", include("allauth.urls")),

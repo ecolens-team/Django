@@ -98,6 +98,40 @@ class SpeciesDetailView(RetrieveAPIView):
     serializer_class = SpeciesSerializer
     permission_classes = [AllowAny]
 
+from rest_framework.views import APIView
+
+class PredictSpeciesView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request, *args, **kwargs):
+        image_file = request.FILES.get('image')
+        if not image_file:
+            return Response({"error": "No image provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            raw_image = Image.open(image_file)
+            pil_image = raw_image.convert("RGB")
+            image_tensor = preprocess(pil_image).unsqueeze(0).to(device)
+            
+            with torch.no_grad():
+                image_features = model.encode_image(image_tensor)
+                image_features /= image_features.norm(dim=-1, keepdim=True)
+                text_probs = (100.0 * image_features @ TEXT_FEATURES).softmax(dim=-1)
+            
+            best_idx = text_probs.argmax().item()
+            confidence = text_probs[0][best_idx].item()
+            species_prediction = SPECIES_LABELS[best_idx]
+            
+            return Response({
+                "species": species_prediction, 
+                "confidence": confidence
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            print(f"AI Error: {e}")
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class ObservationsView(ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     queryset = Observation.objects.all().order_by('-timestamp')
@@ -105,7 +139,7 @@ class ObservationsView(ListCreateAPIView):
     serializer_class = ObservationSerializer
 
     def create(self, request, *args, **kwargs):
-        image_file = request.FILES.get('image')
+        image_file = request.FILES.get('images')
         if not image_file:
             return Response({"error": "No image provided"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -127,33 +161,14 @@ class ObservationsView(ListCreateAPIView):
         if not photo_timestamp:
             photo_timestamp = timezone.now()
 
-        try:
-            raw_image = Image.open(image_file)
-
-            pil_image = raw_image.convert("RGB")
-            image_tensor = preprocess(pil_image).unsqueeze(0).to(device)
-            
-            with torch.no_grad():
-                image_features = model.encode_image(image_tensor)
-                image_features /= image_features.norm(dim=-1, keepdim=True)
-                text_probs = (100.0 * image_features @ TEXT_FEATURES).softmax(dim=-1)
-            
-            best_idx = text_probs.argmax().item()
-            confidence = text_probs[0][best_idx].item()
-            species_prediction = SPECIES_LABELS[best_idx]
-            
-        except Exception as e:
-            print(f"Error processing image or EXIF: {e}")
-            species_prediction = "Unknown"
-            confidence = 0.0
-
-        image_file.seek(0)
+        species_prediction = request.data.get('species_prediction', 'Unknown')
+        confidence = request.data.get('confidence_level', 0.0)
 
 
         species_obj, created = Species.objects.get_or_create(
             scientific_name=species_prediction,
             defaults={'type': 'PLANT'} #fix this later
-        )
+        ) 
         
         data = {
             'description': request.data.get('description', ''),
@@ -165,14 +180,19 @@ class ObservationsView(ListCreateAPIView):
         
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        observation = serializer.save(user=self.request.user, confidence_level=confidence)
+        observation = serializer.save(
+            user=self.request.user,
+            species=species_obj,
+            confidence_level=confidence,
+        )
 
         from .models import Image as ObsImage
-        ObsImage.objects.create(
-            observation=observation,
-            image=image_file,
-            date=photo_timestamp
-        )
+        for img in request.FILES.getlist('images'):
+            ObsImage.objects.create(
+                observation=observation,
+                image=img,
+                date=photo_timestamp
+            )
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
