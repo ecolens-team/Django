@@ -3,7 +3,7 @@ from rest_framework import serializers
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from dj_rest_auth.serializers import UserDetailsSerializer
 from .models import User, ResearcherProfile
-
+from .models import User, ResearcherProfile, Follow
 
 class CustomUserDetailsSerializer(UserDetailsSerializer):
     researcher_profile = serializers.SerializerMethodField()
@@ -103,3 +103,38 @@ class ResearcherApplicationSerializer(serializers.ModelSerializer):
     def get_full_name(self, obj):
         return f"{obj.user.first_name} {obj.user.last_name}"
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    followers_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+    observations_count = serializers.SerializerMethodField()
+    is_following = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'name', 'username', 'bio',
+            'profile_picture', 'role',
+            'followers_count', 'following_count',
+            'observations_count', 'is_following'
+        ]
+
+    def get_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}".strip() or obj.username
+
+    def get_followers_count(self, obj):
+        return obj.followers_set.count()
+
+    def get_following_count(self, obj):
+        return obj.following_set.count()
+
+    def get_observations_count(self, obj):
+        return obj.observations.count()
+
+    def get_is_following(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Follow.objects.filter(
+                follower=request.user, following=obj
+            ).exists()
+        return False
