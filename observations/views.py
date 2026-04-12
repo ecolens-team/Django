@@ -5,7 +5,7 @@ from django.conf import settings
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .models import Observation, Species
-from .serializers import ObservationSerializer, SpeciesSerializer
+from .serializers import ObservationSerializer, SpeciesSerializer, speciesProfileSerializer
 from users.permissions import IsApprovedResearcher
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
@@ -95,7 +95,7 @@ class SpeciesListView(ListAPIView):
 
 class SpeciesDetailView(RetrieveAPIView):
     queryset = Species.objects.all()
-    serializer_class = SpeciesSerializer
+    serializer_class = speciesProfileSerializer
     permission_classes = [AllowAny]
 
 from rest_framework.views import APIView

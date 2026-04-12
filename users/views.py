@@ -1,11 +1,11 @@
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView, UpdateAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import ListAPIView, RetrieveAPIView, UpdateAPIView
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from .permissions import IsApprovedResearcher
-from rest_framework import permissions
-from .models import ResearcherProfile
-from .serializers import ResearcherApplicationSerializer
+from rest_framework import permissions, status
+from .models import Follow, ResearcherProfile, User
+from .serializers import ResearcherApplicationSerializer, UserProfileSerializer
 from django.core.mail import send_mail
 
 class ResearcherOnlyDemoView(APIView):
@@ -48,6 +48,7 @@ class ResearcherApplicationsListView(ListAPIView):
             queryset = queryset.filter(application_status="PENDING")
         
         return queryset
+
 class UserProfileView(RetrieveAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = [AllowAny]

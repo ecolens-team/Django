@@ -9,20 +9,57 @@ class Species(models.Model):
 
     scientific_name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, default="")
+    description_is_verified = models.BooleanField(default=False)
     type = models.CharField(max_length=10, choices=SpeciesType.choices)
     common_name_en = models.CharField(max_length=255, blank=True, default="")
     common_name_ar = models.CharField(max_length=255, blank=True, default="")
+    is_endemic = models.BooleanField(default=False)
+    is_endangered = models.BooleanField(default=False)
+    is_invasive = models.BooleanField(default=False)
 
+    @property
+    def best_image_url(self):
+        """
+        Dynamically grabs the image from the most confident observation.
+        If a new observation this automatically updates.
+        """
+        best_obs = self.observations.filter(images__isnull=False).order_by('-confidence_level').first()
+        if best_obs:
+            best_image = best_obs.images.first()
+            return best_image.image.url if best_image else None
+        return None
     def __str__(self):
         return self.scientific_name
 
 
 class Observation(models.Model):
+    WEATHER_CHOICES = [
+        ('Sunny', 'Clear/Sunny'),
+        ('Partially Cloudy', 'Partially Cloudy'),
+        ('Cloudy', 'Cloudy/Overcast'),
+        ('Foggy', 'Fog/Mist'),
+        
+        ('Rainy', 'Rain'),
+        ('Snowy', 'Snow'),
+        ('Stormy', 'Thunderstorm'),
+        
+        ('Hazy', 'Haze/Smoke/Dust'),
+    ]
+
+    GOV_CHOICES = [
+        ('Ajloun', 'Ajloun'), ('Amman', 'Amman'), ('Aqaba', 'Aqaba'),
+        ('Balqa', 'Balqa'), ('Irbid', 'Irbid'), ('Jerash', 'Jerash'),
+        ('Karak', 'Karak'), ('Maan', 'Maan'), ('Madaba', 'Madaba'),
+        ('Mafraq', 'Mafraq'), ('Tafilah', 'Tafilah'), ('Zarqa', 'Zarqa')
+    ]
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='observations')
     species = models.ForeignKey(Species, on_delete=models.SET_NULL, null=True, blank=True, related_name='observations')
     timestamp = models.DateTimeField(auto_now_add=True)
     longitude = models.FloatField(null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)
+    governorate = models.CharField(max_length=50, choices=GOV_CHOICES, blank=True, null=True)
+    weather = models.CharField(max_length=50, choices=WEATHER_CHOICES, blank=True, null=True)
     description = models.TextField(blank=True, default="")
     confidence_level = models.FloatField(
         null=True, blank=True,

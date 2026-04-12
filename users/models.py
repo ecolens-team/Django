@@ -43,7 +43,8 @@ class ResearcherProfile(models.Model):
 
     def __str__(self):
         return f"Researcher Profile: {self.user.username} ({self.institute})"
-        class Follow(models.Model):
+
+class Follow(models.Model):
     follower = models.ForeignKey(
         User, related_name='following_set', on_delete=models.CASCADE
     )
