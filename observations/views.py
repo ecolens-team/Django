@@ -135,9 +135,33 @@ class PredictSpeciesView(APIView):
 
 class ObservationsView(ListCreateAPIView):
     permission_classes = [IsAuthenticated]
-    queryset = Observation.objects.all().order_by('-timestamp')
     parser_classes = [MultiPartParser, FormParser]
     serializer_class = ObservationSerializer
+
+    def get_queryset(self):
+        queryset = Observation.objects.all().order_by('-timestamp')
+
+        user = self.request.query_params.get("user")
+        species = self.request.query_params.get("species")
+        min_confidence = self.request.query_params.get("min_confidence")
+        ordering = self.request.query_params.get("ordering")
+
+        if user:
+            queryset = queryset.filter(user__username=user)
+        if species:
+            queryset = queryset.filter(
+                species__common_name_en__icontains=species
+            ) | queryset.filter(
+                species__scientific_name__icontains=species
+            )
+        if min_confidence:
+            queryset = queryset.filter(
+                confidence_level__gte=float(min_confidence) / 100
+            )
+        if ordering == "-confidence_level":
+            queryset = queryset.order_by("-confidence_level")
+
+        return queryset
 
     def create(self, request, *args, **kwargs):
         image_file = request.FILES.get('images')
