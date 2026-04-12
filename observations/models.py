@@ -79,3 +79,24 @@ class Image(models.Model):
 
     def __str__(self):
         return f"Image for Observation {self.observation_id}"
+    
+
+class Comment(models.Model):
+    observation = models.ForeignKey(Observation, on_delete=models.CASCADE, related_name="comments")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="observation_comments")
+    content = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Comment by {self.user.username} on {self.observation.id}"
+
+class Like(models.Model):
+    observation = models.ForeignKey(Observation, on_delete=models.CASCADE, related_name="likes")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="observation_likes")
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("observation", "user")
+
+    def __str__(self):
+        return f"Like by {self.user.username} on {self.observation.id}"

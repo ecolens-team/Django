@@ -2,7 +2,7 @@ from PIL import Image, ExifTags
 from datetime import datetime
 from django.utils import timezone
 from django.conf import settings
-from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView
+from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView, get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .models import Observation, Species
 from .serializers import ObservationSerializer, SpeciesSerializer, speciesProfileSerializer
@@ -10,7 +10,8 @@ from users.permissions import IsApprovedResearcher
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework import status
-from django.core.files.storage import FileSystemStorage
+from .models import Like, Comment
+from .serializers import LikeSerializer, CommentSerializer
 import os
 import json
 import torch
@@ -221,3 +222,26 @@ class VerifyObservationView(UpdateAPIView):
             
         except Species.DoesNotExist:
             return Response({"error": "Species not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class LikeObservationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        observation = get_object_or_404(Observation, pk=pk)
+        like, created = Like.objects.get_or_create(user=request.user, observation=observation)
+        if not created:
+            like.delete()
+            return Response({'status': 'unliked'}, status=status.HTTP_200_OK)
+        return Response({'status': 'liked'}, status=status.HTTP_201_CREATED)
+
+class CommentListCreateView(ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CommentSerializer
+
+    def get_queryset(self):
+        return Comment.objects.filter(observation_id=self.kwargs['pk'])
+
+    def perform_create(self, serializer):
+        observation = get_object_or_404(Observation, pk=self.kwargs['pk'])
+        serializer.save(user=self.request.user, observation=observation)

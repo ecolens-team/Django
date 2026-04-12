@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Observation, Species, Image
+from .models import Observation, Species, Image, Comment, Like
 from users.serializers import CustomUserDetailsSerializer
 from django.db.models import Count, Max
 from django.db.models.functions import ExtractMonth
@@ -16,6 +16,10 @@ class ImageSerializer(serializers.ModelSerializer):
         fields = ['id', 'image', 'image_quality', 'date']
 
 class ObservationSerializer(serializers.ModelSerializer):
+    likes_count = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
+    has_liked = serializers.SerializerMethodField()
+
     images = ImageSerializer(many=True, read_only=True) 
     species = SpeciesSerializer(read_only=True)
     user = CustomUserDetailsSerializer(read_only=True)
@@ -24,9 +28,22 @@ class ObservationSerializer(serializers.ModelSerializer):
         model = Observation
         fields = [
             'id', 'user', 'species', 'timestamp', 'longitude', 
-            'latitude', 'description', 'confidence_level', 'verified', 'images', 'governorate', 'weather'
+            'latitude', 'description', 'confidence_level', 'verified', 'images', 'governorate', 'weather',
+            'likes_count', 'comments_count', 'has_liked'
         ]
         read_only_fields = ['user', 'confidence_level', 'verified']
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_comments_count(self, obj):
+        return obj.comments.count()
+
+    def get_has_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(user=request.user).exists()
+        return False
 
 class speciesProfileSerializer(serializers.ModelSerializer):
     scientificName = serializers.CharField(source='scientific_name')
@@ -142,3 +159,16 @@ class speciesProfileSerializer(serializers.ModelSerializer):
             "weather": weather_data
         }
     
+class CommentSerializer(serializers.ModelSerializer):
+    user = CustomUserDetailsSerializer(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'user', 'observation', 'content', 'timestamp']
+        read_only_fields = ['user', 'observation']
+
+class LikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = ['id', 'user', 'observation', 'timestamp']
+        read_only_fields = ['user', 'observation']
