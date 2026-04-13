@@ -10,14 +10,14 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
 
     class Meta(UserDetailsSerializer.Meta):
         model = User
-        fields = UserDetailsSerializer.Meta.fields + ("role", "bio", "phone_number","profile_picture", "researcher_profile")
+        fields = UserDetailsSerializer.Meta.fields + ("role", "bio", "phone_number", "profile_picture", "researcher_profile")
+        read_only_fields = ("role",)
 
     def get_researcher_profile(self, obj):
         if obj.role == "RESEARCHER":
             profile = getattr(obj, "researcher_profile", None)
             if profile:
                 return ResearcherProfileSerializer(profile).data
-
         return None
 
 
