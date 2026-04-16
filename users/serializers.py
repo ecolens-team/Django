@@ -3,7 +3,7 @@ from rest_framework import serializers
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from dj_rest_auth.serializers import UserDetailsSerializer
 from .models import User, ResearcherProfile
-from .models import User, ResearcherProfile, Follow
+from .models import Follow
 
 class CustomUserDetailsSerializer(UserDetailsSerializer):
     researcher_profile = serializers.SerializerMethodField()

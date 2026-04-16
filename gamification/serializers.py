@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Badge, Quest, UserQuest, UserBadge
+from .models import Badge, Quest, UserQuest
 
 class BadgeSerializer(serializers.ModelSerializer):
     class Meta:

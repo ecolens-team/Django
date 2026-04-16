@@ -11,7 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Like, Comment
-from .serializers import LikeSerializer, CommentSerializer
+from .serializers import CommentSerializer
 from rest_framework.views import APIView
 import os
 import json
@@ -51,7 +51,7 @@ else:
 HEAD_PATH = os.path.join(LORA_DIR, 'head.pth')
 
 
-print(f"Loading Base model...")
+print("Loading Base model...")
 base_model, _, preprocess = open_clip.create_model_and_transforms(MODEL_STRING, device=device)
 
 print(f"Attaching LoRA Adapters from {LORA_DIR}...")
@@ -63,7 +63,7 @@ else:
 lora_model.to(device)
 lora_model.eval()
 
-print(f"Attaching Classification Head")
+print("Attaching Classification Head")
 classification_head = nn.Linear(HEAD_DIM, num_classes, bias=False).to(device)
 classification_head.load_state_dict(torch.load(HEAD_PATH, map_location=device))
 classification_head.eval()
