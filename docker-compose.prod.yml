@@ -22,6 +22,7 @@ services:
     volumes:
       - model_data:/app/observations/6
       - model_data_v2:/app/observations/epoch_1
+      - hf_cache:/root/.cache/huggingface
     depends_on:
       - db
 
@@ -29,3 +30,4 @@ volumes:
   postgres_data:
   model_data:
   model_data_v2:
+  hf_cache:
