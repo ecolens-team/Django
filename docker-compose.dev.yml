@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=ecolens_db
+      - POSTGRES_USER=ecolens_user
+      - POSTGRES_PASSWORD=ecolens_pass
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=dev-secret-key-not-for-production
+      - DB_NAME=ecolens_db
+      - DB_USER=ecolens_user
+      - DB_PASSWORD=ecolens_pass
+      - DB_HOST=db
+      - DB_PORT=5432
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,https://gp2-frontend.vercel.app
+      - BIOCLIP_VERSION=2
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
