@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-2ys=m@!9m4q97=gosk70zg+@u+2klhgpw^+!sqhk=w^c((9ic&'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-2ys=m@!9m4q97=gosk70zg+@u+2klhgpw^+!sqhk=w^c((9ic&')
 
 
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
@@ -50,9 +50,9 @@ STORAGES = {
 MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')
 
 
 AUTH_USER_MODEL = 'users.User'
@@ -99,6 +99,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -139,15 +140,16 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
+_cors_origins = os.environ.get(
+    'CORS_ALLOWED_ORIGINS',
+    'http://localhost:3000,https://gp2-frontend.vercel.app'
+).split(',')
 
-CORS_ALLOW_CREDENTIALS = True 
+CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins]
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-]
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 
 ROOT_URLCONF = 'EcoLens.urls'
 
@@ -219,6 +221,4 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
-
-#MEDIA_URL = '/media/'
-#MEDIA_ROOT = BASE_DIR / 'media'
+STATIC_ROOT = BASE_DIR / 'staticfiles'

@@ -20,7 +20,8 @@ pytest-django
 bandit
 ruff
 
-django-storages 
+django-storages
 boto3
 python-dotenv
 gunicorn
+whitenoise
