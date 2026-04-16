@@ -13,8 +13,8 @@ services:
     build: .
     restart: always
     entrypoint: ["/app/entrypoint.sh"]
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     env_file:
       - .env
     environment:
@@ -26,8 +26,23 @@ services:
     depends_on:
       - db
 
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
 volumes:
   postgres_data:
   model_data:
   model_data_v2:
   hf_cache:
+  caddy_data:
+  caddy_config:
