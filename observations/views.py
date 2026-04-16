@@ -12,80 +12,62 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Like, Comment
 from .serializers import LikeSerializer, CommentSerializer
+from rest_framework.views import APIView
 import os
 import json
 import torch
+import torch.nn as nn
 import open_clip
-
+from peft import PeftModel
 
 print("--- SERVER STARTUP ---")
 device = "cpu"
 
-model, _, preprocess = open_clip.create_model_and_transforms('hf-hub:imageomics/bioclip', device=device)
-tokenizer = open_clip.get_tokenizer('hf-hub:imageomics/bioclip')
+
+VERSION_FLAG = os.environ.get("BIOCLIP_VERSION", "2")
+IS_BIOCLIP_2 = (str(VERSION_FLAG) == "2")
+
+print(f"[INFO] Initializing AI.. (BioCLIP Version: {VERSION_FLAG})")
 
 try:
-    json_path = os.path.join(settings.BASE_DIR, 'species.json')
-    with open(json_path, 'r') as f:
-        data = json.load(f)
-        SPECIES_LABELS = data.get('plants', []) + data.get('insects', [])
+    classes_path = os.path.join(settings.BASE_DIR, 'observations', 'ecolens_classes.json')
+    with open(classes_path, 'r', encoding='utf-8') as f:
+        SPECIES_LABELS = json.load(f)
+    num_classes = len(SPECIES_LABELS)
 except Exception as e:
-    print(f"Error loading JSON: {e}. Using fallback.")
-    SPECIES_LABELS = ['black iris', 'bee', 'beetle']
+    print(f"Error loading classes: {e}")
+    SPECIES_LABELS = []
+    num_classes = 0
+
+if IS_BIOCLIP_2:
+    MODEL_STRING = 'hf-hub:imageomics/bioclip-2'
+    HEAD_DIM = 768
+    LORA_DIR = os.path.join(settings.BASE_DIR, 'observations', 'epoch_1') 
+else:
+    MODEL_STRING = 'hf-hub:imageomics/bioclip'
+    HEAD_DIM = 512
+    LORA_DIR = os.path.join(settings.BASE_DIR, 'observations', '6')
+
+HEAD_PATH = os.path.join(LORA_DIR, 'head.pth')
 
 
-CACHE_PATH = os.path.join(settings.BASE_DIR, 'species_embeddings.pt')
-TEXT_FEATURES = None
+print(f"Loading Base model...")
+base_model, _, preprocess = open_clip.create_model_and_transforms(MODEL_STRING, device=device)
 
-TEMPLATES = [
-    lambda c: f'a photo of a {c}.',
-    lambda c: f'a close-up photo of a {c}.',
-    lambda c: f'a photo of the {c}.',
-    lambda c: f'the {c} in the wild.',
-    lambda c: f'a specimen of {c}.',
-    lambda c: f'it is a {c}.',
-]
-
-def load_or_compute_embeddings():
-    global TEXT_FEATURES
+print(f"Attaching LoRA Adapters from {LORA_DIR}...")
+if IS_BIOCLIP_2:
+    lora_model = PeftModel.from_pretrained(base_model.visual, LORA_DIR)
+else:
+    lora_model = PeftModel.from_pretrained(base_model, LORA_DIR)
     
-    if os.path.exists(CACHE_PATH):
-        print(f"Found cached embeddings at {CACHE_PATH}...")
-        try:
-            cached_data = torch.load(CACHE_PATH, weights_only=True)
-            if cached_data.shape[1] == len(SPECIES_LABELS):
-                return cached_data.to(device)
-            else:
-                print(f"Cache mismatch (Saved: {cached_data.shape[1]}, Current: {len(SPECIES_LABELS)}). Recomputing...")
-        except Exception as e:
-            print(f"Corrupt cache: {e}. Recomputing...")
+lora_model.to(device)
+lora_model.eval()
 
-    print(f"Computing embeddings for {len(SPECIES_LABELS)} species...")
-    
-    with torch.no_grad():
-        all_features = []
-        for i, species_name in enumerate(SPECIES_LABELS):
-            if i % 100 == 0: 
-                print(f"Processing {i}/{len(SPECIES_LABELS)}...")
+print(f"Attaching Classification Head")
+classification_head = nn.Linear(HEAD_DIM, num_classes, bias=False).to(device)
+classification_head.load_state_dict(torch.load(HEAD_PATH, map_location=device))
+classification_head.eval()
 
-            texts = [template(species_name) for template in TEMPLATES]
-            tokens = tokenizer(texts)
-            class_embeddings = model.encode_text(tokens)
-            class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
-
-            class_embedding = class_embeddings.mean(dim=0)
-            class_embedding /= class_embedding.norm()
-            all_features.append(class_embedding)
-
-        features_matrix = torch.stack(all_features, dim=1).to(device)
-        
-        torch.save(features_matrix, CACHE_PATH)
-        print(f"Saved embeddings to {CACHE_PATH}")
-        
-        return features_matrix
-
-
-TEXT_FEATURES = load_or_compute_embeddings()
 print("--- AI READY ---")
 
 
@@ -99,7 +81,6 @@ class SpeciesDetailView(RetrieveAPIView):
     serializer_class = speciesProfileSerializer
     permission_classes = [AllowAny]
 
-from rest_framework.views import APIView
 
 class PredictSpeciesView(APIView):
     permission_classes = [IsAuthenticated]
@@ -116,16 +97,20 @@ class PredictSpeciesView(APIView):
             image_tensor = preprocess(pil_image).unsqueeze(0).to(device)
             
             with torch.no_grad():
-                image_features = model.encode_image(image_tensor)
-                image_features /= image_features.norm(dim=-1, keepdim=True)
-                text_probs = (100.0 * image_features @ TEXT_FEATURES).softmax(dim=-1)
+                if IS_BIOCLIP_2:
+                    features = lora_model(image_tensor)
+                else:
+                    features = lora_model.encode_image(image_tensor)
+                
+                logits = classification_head(features)
+                probabilities = logits.softmax(dim=-1)
             
-            best_idx = text_probs.argmax().item()
-            confidence = text_probs[0][best_idx].item()
+            best_idx = probabilities.argmax().item()
+            confidence = probabilities[0][best_idx].item()
             species_prediction = SPECIES_LABELS[best_idx]
             
             return Response({
-                "species": species_prediction, 
+                "species": species_prediction.replace("_", " "), 
                 "confidence": confidence
             }, status=status.HTTP_200_OK)
             

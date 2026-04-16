@@ -12,6 +12,8 @@ torchvision
 open_clip_torch
 numpy
 huggingface_hub
+peft
+safetensors
 
 pytest
 pytest-django
@@ -21,3 +23,4 @@ ruff
 django-storages 
 boto3
 python-dotenv
+gunicorn
