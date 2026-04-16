@@ -65,7 +65,7 @@ lora_model.eval()
 
 print("Attaching Classification Head")
 classification_head = nn.Linear(HEAD_DIM, num_classes, bias=False).to(device)
-classification_head.load_state_dict(torch.load(HEAD_PATH, map_location=device))
+classification_head.load_state_dict(torch.load(HEAD_PATH, map_location=device, weights_only=True))
 classification_head.eval()
 
 print("--- AI READY ---")
