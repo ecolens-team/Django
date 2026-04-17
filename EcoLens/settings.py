@@ -125,8 +125,8 @@ REST_AUTH = {
     'JWT_AUTH_COOKIE': 'jwt-auth',
     'JWT_AUTH_REFRESH_COOKIE': 'jwt-refresh-token',
     'JWT_AUTH_HTTPONLY': True,
-    'JWT_AUTH_COOKIE_SECURE': _is_production,
-    'JWT_AUTH_COOKIE_SAMESITE': 'None' if _is_production else 'Lax',
+    'JWT_AUTH_SECURE': _is_production,
+    'JWT_AUTH_SAMESITE': 'None' if _is_production else 'Lax',
     'REGISTER_SERIALIZER': "users.serializers.CustomRegisterSerializer",
     "USER_DETAILS_SERIALIZER": "users.serializers.CustomUserDetailsSerializer",
 }
