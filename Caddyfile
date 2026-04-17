@@ -1,3 +1,6 @@
 ecolens-api.duckdns.org {
     reverse_proxy web:8000
+   :80 {
+    reverse_proxy web:8000
+}
 }

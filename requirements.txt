@@ -25,3 +25,5 @@ boto3
 python-dotenv
 gunicorn
 whitenoise
+daphne
+channels

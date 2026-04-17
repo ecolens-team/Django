@@ -8,6 +8,9 @@ services:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
+  redis:                  
+    image: redis:alpine
+    restart: always
 
   web:
     build: .
@@ -25,7 +28,7 @@ services:
       - hf_cache:/root/.cache/huggingface
     depends_on:
       - db
-
+      - redis    
   caddy:
     image: caddy:2-alpine
     restart: always
@@ -46,3 +49,4 @@ volumes:
   hf_cache:
   caddy_data:
   caddy_config:
+  

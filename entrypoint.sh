@@ -8,10 +8,6 @@ echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
 echo "Starting gunicorn..."
-exec gunicorn EcoLens.wsgi:application \
-    --bind 0.0.0.0:8000 \
-    --workers 1 \
-    --timeout 300 \
-    --preload \
-    --access-logfile - \
-    --error-logfile -
+exec daphne -b 0.0.0.0 -p 8000 EcoLens.asgi:application 
+    
+    

@@ -9,7 +9,11 @@ services:
       - POSTGRES_PASSWORD=ecolens_pass
     ports:
       - "5432:5432"
+  redis:
+    image: redis:alpine
+    restart: always
 
+  
   web:
     build: .
     command: python manage.py runserver 0.0.0.0:8000
@@ -29,6 +33,6 @@ services:
       - BIOCLIP_VERSION=2
     depends_on:
       - db
-
+      - redis 
 volumes:
   postgres_data:
