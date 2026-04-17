@@ -8,7 +8,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.other_user_username = self.scope['url_route']['kwargs']['username']
         self.user = self.scope["user"]
         
-        usernames = sorted([self.user.username, self.other_user_username])
+        #usernames = sorted([self.user.username, self.other_user_username])
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f"chat_group_{self.room_name}"
         user = self.scope['user']

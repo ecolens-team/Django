@@ -19,7 +19,7 @@ django.setup()
 
 
 
-import users.routing 
+import users.routing  # noqa: E402
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
