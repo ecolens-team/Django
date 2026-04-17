@@ -9,9 +9,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.user = self.scope["user"]
         
         usernames = sorted([self.user.username, self.other_user_username])
-        self.room_name = f"chat_{usernames[0]}_{usernames[1]}"
+        self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f"chat_group_{self.room_name}"
-
+        user = self.scope['user']
+        if user.username not in self.room_name:
+        await self.close()
+        return
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
