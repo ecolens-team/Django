@@ -5,7 +5,7 @@ from django.conf import settings
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView, get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .models import Observation, Species
-from .serializers import ObservationSerializer, SpeciesSerializer, speciesProfileSerializer
+from .serializers import ObservationSerializer, SpeciesSerializer, speciesProfileSerializer, SpeciesUpdateSerializer
 from users.permissions import IsApprovedResearcher
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
@@ -80,6 +80,21 @@ class SpeciesDetailView(RetrieveAPIView):
     queryset = Species.objects.all()
     serializer_class = speciesProfileSerializer
     permission_classes = [AllowAny]
+
+
+class IsResearcherOrAdmin(IsApprovedResearcher):
+    def has_permission(self, request, view):
+        user = request.user
+        if user and user.is_authenticated and getattr(user, 'role', None) == 'ADMIN':
+            return True
+        return super().has_permission(request, view)
+
+
+class SpeciesUpdateView(UpdateAPIView):
+    queryset = Species.objects.all()
+    serializer_class = SpeciesUpdateSerializer
+    permission_classes = [IsResearcherOrAdmin]
+    http_method_names = ['patch']
 
 
 class PredictSpeciesView(APIView):

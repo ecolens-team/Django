@@ -159,6 +159,11 @@ class speciesProfileSerializer(serializers.ModelSerializer):
             "weather": weather_data
         }
     
+class SpeciesUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Species
+        fields = ['description', 'description_is_verified', 'is_endangered', 'is_invasive', 'is_endemic', 'common_name_en', 'common_name_ar']
+
 class CommentSerializer(serializers.ModelSerializer):
     user = CustomUserDetailsSerializer(read_only=True)
 
