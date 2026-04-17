@@ -118,11 +118,15 @@ ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 PASSWORD_RESET_USE_SITES_DOMAIN = False
 PASSWORD_RESET_CONFIRM_URL = "reset-password/{uid}/{token}"
 
+_is_production = not DEBUG
+
 REST_AUTH = {
     'USE_JWT': True,
     'JWT_AUTH_COOKIE': 'jwt-auth',
     'JWT_AUTH_REFRESH_COOKIE': 'jwt-refresh-token',
-    'JWT_AUTH_HTTPONLY': False, 
+    'JWT_AUTH_HTTPONLY': True,
+    'JWT_AUTH_COOKIE_SECURE': _is_production,
+    'JWT_AUTH_COOKIE_SAMESITE': 'None' if _is_production else 'Lax',
     'REGISTER_SERIALIZER': "users.serializers.CustomRegisterSerializer",
     "USER_DETAILS_SERIALIZER": "users.serializers.CustomUserDetailsSerializer",
 }
