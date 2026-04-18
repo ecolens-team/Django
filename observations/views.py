@@ -5,7 +5,7 @@ from django.conf import settings
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView, get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .models import Observation, Species
-from .serializers import ObservationSerializer, SpeciesSerializer, speciesProfileSerializer
+from .serializers import ObservationSerializer, SpeciesSerializer, speciesProfileSerializer, SpeciesUpdateSerializer
 from users.permissions import IsApprovedResearcher
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
@@ -20,55 +20,64 @@ import torch.nn as nn
 import open_clip
 from peft import PeftModel
 
-print("--- SERVER STARTUP ---")
 device = "cpu"
-
-
 VERSION_FLAG = os.environ.get("BIOCLIP_VERSION", "2")
 IS_BIOCLIP_2 = (str(VERSION_FLAG) == "2")
 
-print(f"[INFO] Initializing AI.. (BioCLIP Version: {VERSION_FLAG})")
 
-try:
-    classes_path = os.path.join(settings.BASE_DIR, 'observations', 'ecolens_classes.json')
-    with open(classes_path, 'r', encoding='utf-8') as f:
-        SPECIES_LABELS = json.load(f)
-    num_classes = len(SPECIES_LABELS)
-except Exception as e:
-    print(f"Error loading classes: {e}")
-    SPECIES_LABELS = []
-    num_classes = 0
-
-if IS_BIOCLIP_2:
-    MODEL_STRING = 'hf-hub:imageomics/bioclip-2'
-    HEAD_DIM = 768
-    LORA_DIR = os.path.join(settings.BASE_DIR, 'observations', 'epoch_1') 
-else:
-    MODEL_STRING = 'hf-hub:imageomics/bioclip'
-    HEAD_DIM = 512
-    LORA_DIR = os.path.join(settings.BASE_DIR, 'observations', '6')
-
-HEAD_PATH = os.path.join(LORA_DIR, 'head.pth')
+_ai_ready = False
+SPECIES_LABELS = []
+lora_model = None
+preprocess = None
+classification_head = None
 
 
-print("Loading Base model...")
-base_model, _, preprocess = open_clip.create_model_and_transforms(MODEL_STRING, device=device)
+def _load_ai():
+    global _ai_ready, SPECIES_LABELS, lora_model, preprocess, classification_head
 
-print(f"Attaching LoRA Adapters from {LORA_DIR}...")
-if IS_BIOCLIP_2:
-    lora_model = PeftModel.from_pretrained(base_model.visual, LORA_DIR)
-else:
-    lora_model = PeftModel.from_pretrained(base_model, LORA_DIR)
-    
-lora_model.to(device)
-lora_model.eval()
+    print("--- SERVER STARTUP ---", flush=True)
+    print(f"[INFO] Initializing AI.. (BioCLIP Version: {VERSION_FLAG})", flush=True)
 
-print("Attaching Classification Head")
-classification_head = nn.Linear(HEAD_DIM, num_classes, bias=False).to(device)
-classification_head.load_state_dict(torch.load(HEAD_PATH, map_location=device, weights_only=True))
-classification_head.eval()
+    try:
+        classes_path = os.path.join(settings.BASE_DIR, 'observations', 'ecolens_classes.json')
+        with open(classes_path, 'r', encoding='utf-8') as f:
+            SPECIES_LABELS = json.load(f)
+        num_classes = len(SPECIES_LABELS)
+    except Exception as e:
+        print(f"Error loading classes: {e}", flush=True)
+        SPECIES_LABELS = []
+        num_classes = 0
 
-print("--- AI READY ---")
+    if IS_BIOCLIP_2:
+        MODEL_STRING = 'hf-hub:imageomics/bioclip-2'
+        HEAD_DIM = 768
+        LORA_DIR = os.path.join(settings.BASE_DIR, 'observations', 'epoch_1')
+    else:
+        MODEL_STRING = 'hf-hub:imageomics/bioclip'
+        HEAD_DIM = 512
+        LORA_DIR = os.path.join(settings.BASE_DIR, 'observations', '6')
+
+    HEAD_PATH = os.path.join(LORA_DIR, 'head.pth')
+
+    print("Loading Base model...", flush=True)
+    base_model, _, preprocess = open_clip.create_model_and_transforms(MODEL_STRING, device=device)
+
+    print(f"Attaching LoRA Adapters from {LORA_DIR}...", flush=True)
+    if IS_BIOCLIP_2:
+        lora_model = PeftModel.from_pretrained(base_model.visual, LORA_DIR)
+    else:
+        lora_model = PeftModel.from_pretrained(base_model, LORA_DIR)
+
+    lora_model.to(device)
+    lora_model.eval()
+
+    print("Attaching Classification Head", flush=True)
+    classification_head = nn.Linear(HEAD_DIM, num_classes, bias=False).to(device)
+    classification_head.load_state_dict(torch.load(HEAD_PATH, map_location=device, weights_only=True))
+    classification_head.eval()
+
+    _ai_ready = True
+    print("--- AI READY ---", flush=True)
 
 
 class SpeciesListView(ListAPIView):
@@ -80,6 +89,21 @@ class SpeciesDetailView(RetrieveAPIView):
     queryset = Species.objects.all()
     serializer_class = speciesProfileSerializer
     permission_classes = [AllowAny]
+
+
+class IsResearcherOrAdmin(IsApprovedResearcher):
+    def has_permission(self, request, view):
+        user = request.user
+        if user and user.is_authenticated and getattr(user, 'role', None) == 'ADMIN':
+            return True
+        return super().has_permission(request, view)
+
+
+class SpeciesUpdateView(UpdateAPIView):
+    queryset = Species.objects.all()
+    serializer_class = SpeciesUpdateSerializer
+    permission_classes = [IsResearcherOrAdmin]
+    http_method_names = ['patch']
 
 
 class PredictSpeciesView(APIView):
@@ -95,7 +119,7 @@ class PredictSpeciesView(APIView):
             raw_image = Image.open(image_file)
             pil_image = raw_image.convert("RGB")
             image_tensor = preprocess(pil_image).unsqueeze(0).to(device)
-            
+
             with torch.no_grad():
                 if IS_BIOCLIP_2:
                     features = lora_model(image_tensor)

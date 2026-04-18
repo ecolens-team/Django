@@ -19,7 +19,11 @@ from channels.security.websocket import AllowedHostsOriginValidator  \
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'EcoLens.settings')
 django.setup()
 
+
 import users.routing
+
+
+
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
