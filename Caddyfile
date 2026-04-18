@@ -1,6 +1,17 @@
+
 ecolens-api.duckdns.org {
-    reverse_proxy web:8000
-   :80 {
-    reverse_proxy web:8000
-}
+    tls {
+        issuer acme {
+            dir https://acme-v02.api.letsencrypt.org/directory
+            challenge http
+        }
+    }
+    reverse_proxy web:8000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+        header_up Connection {>Connection}
+        header_up Upgrade {>Upgrade}
+    }
 }

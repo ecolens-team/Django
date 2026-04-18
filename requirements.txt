@@ -27,3 +27,4 @@ gunicorn
 whitenoise
 daphne
 channels
+channels-redis

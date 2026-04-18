@@ -18,8 +18,8 @@ services:
     build: .
     restart: always
     entrypoint: ["/app/entrypoint.sh"]
-    ports:
-      - "8000:8000"
+    expose:
+    - "8000"
     env_file:
       - .env
     environment:
@@ -29,9 +29,11 @@ services:
       - model_data_v2:/app/observations/epoch_1
     depends_on:
       - db
-       - redis 
+      - redis 
 
 volumes:
   postgres_data:
   model_data:
   model_data_v2:
+  caddy_data:      
+  caddy_config:  

@@ -49,6 +49,7 @@ MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaw
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')
+ALLOWED_HOSTS += ['localhost', '127.0.0.1', 'ecolens-api.duckdns.org']
 
 
 AUTH_USER_MODEL = 'users.User'
@@ -112,7 +113,10 @@ MIDDLEWARE = [
 SITE_ID = 1
 
 ACCOUNT_EMAIL_VERIFICATION = 'none'
-ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email' 
+ACCOUNT_LOGIN_METHODS = {'email', 'username'}
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = True
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 
 PASSWORD_RESET_USE_SITES_DOMAIN = False
@@ -125,12 +129,11 @@ REST_AUTH = {
     'JWT_AUTH_COOKIE': 'jwt-auth',
     'JWT_AUTH_REFRESH_COOKIE': 'jwt-refresh-token',
     'JWT_AUTH_HTTPONLY': True,
-    'JWT_AUTH_SECURE': _is_production,
-    'JWT_AUTH_SAMESITE': 'None' if _is_production else 'Lax',
+    'JWT_AUTH_SECURE': not DEBUG, 
+    'JWT_AUTH_SAMESITE': 'Lax', 
     'REGISTER_SERIALIZER': "users.serializers.CustomRegisterSerializer",
     "USER_DETAILS_SERIALIZER": "users.serializers.CustomUserDetailsSerializer",
 }
-
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 DEFAULT_FROM_EMAIL = "noreply@ecolens.local"
 
@@ -146,15 +149,22 @@ SOCIALACCOUNT_PROVIDERS = {
 
 _cors_origins = os.environ.get(
     'CORS_ALLOWED_ORIGINS',
-    'http://localhost:3000,https://gp2-frontend.vercel.app'
+    'https://ecolens-api.duckdns.org,http://localhost:3000,https://gp2-frontend.vercel.app'
 ).split(',')
 
 CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins]
 
 CORS_ALLOW_CREDENTIALS = True
-
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://ecolens-api.duckdns.org",
+    "https://gp2-frontend.vercel.app",
+    "http://localhost:3000",
+]
+
+CORS_ALLOWED_ORIGINS = CSRF_TRUSTED_ORIGINS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 ROOT_URLCONF = 'EcoLens.urls'
 
 TEMPLATES = [
@@ -178,7 +188,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("redis", 6379)], 
+       "hosts": [(os.environ.get("REDIS_HOST", "redis"), int(os.environ.get("REDIS_PORT", 6379)))],
         },
     },
 }
