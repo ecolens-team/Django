@@ -10,7 +10,7 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
 
     class Meta(UserDetailsSerializer.Meta):
         model = User
-        fields = UserDetailsSerializer.Meta.fields + ("role", "bio", "phone_number", "profile_picture", "researcher_profile")
+        fields = UserDetailsSerializer.Meta.fields + ("role", "bio", "phone_number", "profile_picture", "researcher_profile", "is_active")
         read_only_fields = ("role",)
 
     def get_researcher_profile(self, obj):

@@ -8,6 +8,8 @@ from .models import Follow, ResearcherProfile, User
 from .serializers import CustomUserDetailsSerializer, ResearcherApplicationSerializer, UserProfileSerializer
 from django.core.mail import send_mail
 from rest_framework.pagination import PageNumberPagination
+from observations.models import Observation, Species
+from gamification.models import Quest
 from django_filters import rest_framework as filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
@@ -110,6 +112,38 @@ class GetUsersView(ListAPIView):
     pagination_class = UsersPaginationClass
     filter_backends = [DjangoFilterBackend]
     filterset_class = UserFilter
+
+class AdminStatsView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request):
+        total_species = Species.objects.count()
+        species_with_obs = Species.objects.filter(observations__isnull=False).distinct().count()
+
+        return Response({
+            "researchers": {
+                "approved": ResearcherProfile.objects.filter(application_status="APPROVED").count(),
+                "pending": ResearcherProfile.objects.filter(application_status="PENDING").count(),
+            },
+            "quests": {
+                "total": Quest.objects.count(),
+                "pending": Quest.objects.filter(status="PENDING").count(),
+                "active": Quest.objects.filter(status="ACTIVE").count(),
+                "completed": Quest.objects.filter(status="COMPLETED").count(),
+            },
+            "users": {
+                "total": User.objects.count(),
+            },
+            "observations": {
+                "total": Observation.objects.count(),
+            },
+            "species": {
+                "total": total_species,
+                "with_observations": species_with_obs,
+                "without_observations": total_species - species_with_obs,
+            },
+        })
+
 
 class ToggleUserActiveView(APIView):
     permission_classes = [permissions.IsAdminUser]
