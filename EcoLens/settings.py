@@ -130,7 +130,7 @@ REST_AUTH = {
     'JWT_AUTH_REFRESH_COOKIE': 'jwt-refresh-token',
     'JWT_AUTH_HTTPONLY': True,
     'JWT_AUTH_SECURE': not DEBUG, 
-    'JWT_AUTH_SAMESITE': 'Lax', 
+    'JWT_AUTH_SAMESITE': 'None',
     'REGISTER_SERIALIZER': "users.serializers.CustomRegisterSerializer",
     "USER_DETAILS_SERIALIZER": "users.serializers.CustomUserDetailsSerializer",
 }
