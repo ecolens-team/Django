@@ -51,7 +51,7 @@ def _load_ai():
     if IS_BIOCLIP_2:
         MODEL_STRING = 'hf-hub:imageomics/bioclip-2'
         HEAD_DIM = 768
-        LORA_DIR = os.path.join(settings.BASE_DIR, 'observations', 'epoch_1')
+        LORA_DIR = os.path.join(settings.BASE_DIR, 'observations', 'v4_epoch_3')
     else:
         MODEL_STRING = 'hf-hub:imageomics/bioclip'
         HEAD_DIM = 512

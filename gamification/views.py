@@ -8,6 +8,11 @@ from .serializers import QuestSerializer
 from users.permissions import IsApprovedResearcher
 from rest_framework.permissions import IsAdminUser
 
+class PendingQuestListView(generics.ListAPIView):
+    queryset = Quest.objects.filter(status='PENDING')
+    serializer_class = QuestSerializer
+    permission_classes = [IsAuthenticated]
+
 class ActiveQuestListView(generics.ListAPIView):
     queryset = Quest.objects.filter(status='ACTIVE')
     serializer_class = QuestSerializer

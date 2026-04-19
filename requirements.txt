@@ -28,3 +28,4 @@ whitenoise
 daphne
 channels
 channels-redis
+django-filter

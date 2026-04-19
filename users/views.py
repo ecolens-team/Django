@@ -5,8 +5,12 @@ from rest_framework.response import Response
 from .permissions import IsApprovedResearcher
 from rest_framework import permissions, status
 from .models import Follow, ResearcherProfile, User
-from .serializers import ResearcherApplicationSerializer, UserProfileSerializer
+from .serializers import CustomUserDetailsSerializer, ResearcherApplicationSerializer, UserProfileSerializer
 from django.core.mail import send_mail
+from rest_framework.pagination import PageNumberPagination
+from django_filters import rest_framework as filters
+from django_filters.rest_framework import DjangoFilterBackend
+from django.shortcuts import get_object_or_404
 
 class ResearcherOnlyDemoView(APIView):
     permission_classes = [IsAuthenticated, IsApprovedResearcher]
@@ -83,3 +87,40 @@ class FollowToggleView(APIView):
             return Response({'following': False})
 
         return Response({'following': True})
+
+
+class UsersPaginationClass(PageNumberPagination):
+    page_size = 10
+    max_page_size = 100
+
+class UserFilter(filters.FilterSet):
+    role = filters.CharFilter(field_name='role', lookup_expr='iexact')
+    username = filters.CharFilter(field_name='username', lookup_expr='icontains')
+    email = filters.CharFilter(field_name='email', lookup_expr='icontains')
+    id = filters.NumberFilter(field_name='pk', lookup_expr='iexact')
+
+    class Meta:
+        model = User
+        fields = ['role', 'username', 'email', 'id']
+
+class GetUsersView(ListAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    queryset = User.objects.all()
+    serializer_class = CustomUserDetailsSerializer
+    pagination_class = UsersPaginationClass
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = UserFilter
+
+class ToggleUserActiveView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+    def post(self, request, user_id):
+        user = get_object_or_404(User, pk=user_id)
+        user.is_active = not user.is_active
+        user.save()
+
+        state = 'active' if user.is_active else 'banned'
+        message = f'user with id: {user_id} is now {state}'  
+        return Response({
+            'message': message,
+            'is_active': user.is_active
+        }, status=status.HTTP_200_OK)

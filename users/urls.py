@@ -5,6 +5,8 @@ from .views import (
     ReviewResearcherApplicationView,
     UserProfileView,
     FollowToggleView,
+    GetUsersView,
+    ToggleUserActiveView
 )
 
 urlpatterns = [
@@ -15,4 +17,6 @@ urlpatterns = [
     path('researcher-only/', ResearcherOnlyDemoView.as_view(), name='reseracher-only'),
     path('users/<str:username>/', UserProfileView.as_view(), name='user-profile'),
     path('users/<str:username>/follow/', FollowToggleView.as_view(), name='follow-toggle'),
+    path('users/', GetUsersView.as_view(), name='user-list'),
+    path('users/<int:user_id>/toggle-active/', ToggleUserActiveView.as_view(), name='toggle-user'),
 ]
