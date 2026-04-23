@@ -44,6 +44,30 @@ class ResearcherProfile(models.Model):
     def __str__(self):
         return f"Researcher Profile: {self.user.username} ({self.institute})"
 
+class ResearcherSpecialization(models.Model):
+    class TaxonomyLevel(models.TextChoices):
+        CLASS = 'CLASS', 'Class'
+        ORDER = 'ORDER', 'Order'
+        FAMILY = 'FAMILY', 'Family'
+        GENUS = 'GENUS', 'Genus'
+        SPECIES = 'SPECIES', 'Species'
+
+    researcher = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='specializations',
+        limit_choices_to={'role': 'RESEARCHER'},
+    )
+    level = models.CharField(max_length=10, choices=TaxonomyLevel.choices)
+    name = models.CharField(max_length=255)
+
+    class Meta:
+        unique_together = ('researcher', 'level', 'name')
+
+    def __str__(self):
+        return f"{self.researcher.username} — {self.level}: {self.name}"
+
+
 class Follow(models.Model):
     follower = models.ForeignKey(
         User, related_name='following_set', on_delete=models.CASCADE

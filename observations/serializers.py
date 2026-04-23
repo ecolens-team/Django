@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Observation, Species, Image, Comment, Like
 from users.serializers import CustomUserDetailsSerializer
-from django.db.models import Count, Max
+from django.db.models import Count, Max, Q
 from django.db.models.functions import ExtractMonth
 from django.core.files.storage import default_storage
 
@@ -107,11 +107,48 @@ class speciesProfileSerializer(serializers.ModelSerializer):
                 "avatar": avatar_url
             })
 
+        # Cascade: species → genus → family → order → class
+        # Return top 3, preferring the most specific match
+        from users.models import ResearcherSpecialization
+        type_to_class = {'PLANT': 'Plantae', 'INSECT': 'Insecta'}
+        cascade_filters = [
+            Q(level='SPECIES', name=obj.scientific_name),
+            Q(level='GENUS',   name=obj.genus),
+            Q(level='FAMILY',  name=obj.family),
+            Q(level='ORDER',   name=obj.order),
+            Q(level='CLASS',   name=type_to_class.get(obj.type, '')),
+        ]
+        seen_ids = set()
+        experts_data = []
+        for filt in cascade_filters:
+            if len(experts_data) >= 3:
+                break
+            slots = 3 - len(experts_data)
+            specs = (
+                ResearcherSpecialization.objects
+                .filter(filt)
+                .filter(researcher__role='RESEARCHER')
+                .exclude(researcher_id__in=seen_ids)
+                .select_related('researcher')[:slots]
+            )
+            for spec in specs:
+                r = spec.researcher
+                if r.profile_picture:
+                    avatar = default_storage.url(r.profile_picture.name)
+                else:
+                    avatar = f"https://ui-avatars.com/api/?name={r.username}&background=0d9488&color=fff"
+                experts_data.append({
+                    "name": r.username,
+                    "title": f"{spec.level.capitalize()}: {spec.name}",
+                    "avatar": avatar,
+                })
+                seen_ids.add(r.pk)
+
         return {
             "totalObservations": total,
             "topObservers": observers_data,
-            "topExperts": [], # todo this would pull verfied researchers who say this species is in thier expertise plus who have verified it the most
-            "activeQuests": [] # todo add this after updating quest model so that Quest.objects.filter(target_species=obj)// it could have more than one species too
+            "topExperts": experts_data,
+            "activeQuests": []
         }
     
     def get_dataInsights(self, obj):

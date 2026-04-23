@@ -16,6 +16,9 @@ class Species(models.Model):
     is_endemic = models.BooleanField(default=False)
     is_endangered = models.BooleanField(default=False)
     is_invasive = models.BooleanField(default=False)
+    genus = models.CharField(max_length=100, blank=True, default="")
+    family = models.CharField(max_length=100, blank=True, default="")
+    order = models.CharField(max_length=100, blank=True, default="")
 
     @property
     def best_image_url(self):

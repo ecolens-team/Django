@@ -34,6 +34,9 @@ class Command(BaseCommand):
                     'description': item.get('summary', ''),
                     'common_name_en': item.get('common_name_en', ''),
                     'is_endangered': item.get('is_endangered', False),
+                    'genus': item.get('genus', ''),
+                    'family': item.get('family', ''),
+                    'order': item.get('order', ''),
                 },
             )
             if created:

@@ -8,6 +8,7 @@ from .views import (
     GetUsersView,
     ToggleUserActiveView,
     AdminStatsView,
+    ResearcherSpecializationsView,
 )
 
 urlpatterns = [
@@ -21,4 +22,5 @@ urlpatterns = [
     path('users/<str:username>/follow/', FollowToggleView.as_view(), name='follow-toggle'),
     path('users/', GetUsersView.as_view(), name='user-list'),
     path('users/<int:user_id>/toggle-active/', ToggleUserActiveView.as_view(), name='toggle-user'),
+    path('me/specializations/', ResearcherSpecializationsView.as_view(), name='my-specializations'),
 ]

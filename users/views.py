@@ -4,7 +4,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from .permissions import IsApprovedResearcher
 from rest_framework import permissions, status
-from .models import Follow, ResearcherProfile, User
+from .models import Follow, ResearcherProfile, ResearcherSpecialization, User
 from .serializers import CustomUserDetailsSerializer, ResearcherApplicationSerializer, UserProfileSerializer
 from django.core.mail import send_mail
 from rest_framework.pagination import PageNumberPagination
@@ -153,8 +153,41 @@ class ToggleUserActiveView(APIView):
         user.save()
 
         state = 'active' if user.is_active else 'banned'
-        message = f'user with id: {user_id} is now {state}'  
+        message = f'user with id: {user_id} is now {state}'
         return Response({
             'message': message,
             'is_active': user.is_active
         }, status=status.HTTP_200_OK)
+
+
+VALID_LEVELS = {c[0] for c in ResearcherSpecialization.TaxonomyLevel.choices}
+
+class ResearcherSpecializationsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        specs = ResearcherSpecialization.objects.filter(researcher=request.user)
+        data = [{"id": s.pk, "level": s.level, "name": s.name} for s in specs]
+        return Response(data)
+
+    def put(self, request):
+        """Replace all specializations for the current user with the submitted list."""
+        items = request.data if isinstance(request.data, list) else request.data.get('specializations', [])
+        errors = []
+        for item in items:
+            if item.get('level') not in VALID_LEVELS:
+                errors.append(f"Invalid level: {item.get('level')}")
+            if not item.get('name', '').strip():
+                errors.append("Each specialization must have a non-empty name.")
+        if errors:
+            return Response({'errors': errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        ResearcherSpecialization.objects.filter(researcher=request.user).delete()
+        created = [
+            ResearcherSpecialization(researcher=request.user, level=item['level'], name=item['name'].strip())
+            for item in items
+        ]
+        ResearcherSpecialization.objects.bulk_create(created, ignore_conflicts=True)
+        data = [{"id": s.pk, "level": s.level, "name": s.name}
+                for s in ResearcherSpecialization.objects.filter(researcher=request.user)]
+        return Response(data, status=status.HTTP_200_OK)

@@ -278,3 +278,26 @@ class CommentListCreateView(ListCreateAPIView):
     def perform_create(self, serializer):
         observation = get_object_or_404(Observation, pk=self.kwargs['pk'])
         serializer.save(user=self.request.user, observation=observation)
+
+class TaxaOptionsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        level = request.query_params.get('level')
+        q = request.query_params.get('q')
+        options = None
+
+        if level == 'species':
+            options = Species.objects.filter(scientific_name__icontains=q).values_list('scientific_name', flat=True).distinct()[0:10]
+        elif level == 'genus':
+            options = Species.objects.filter(genus__icontains=q).values_list('genus', flat=True).distinct()[0:10]
+        elif level == 'family':
+            options = Species.objects.values_list('family', flat=True).distinct()
+        elif level == 'order':
+            options = Species.objects.values_list('order', flat=True).distinct()
+        else:
+            options = ['insecta', 'plantae']
+
+        return Response(options)
+
+        
