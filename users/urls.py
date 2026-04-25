@@ -1,4 +1,6 @@
 from django.urls import path, include
+from .views import WsTokenView
+
 from .views import (
     ResearcherOnlyDemoView,
     ResearcherApplicationsListView,
@@ -12,6 +14,7 @@ from .views import (
 )
 
 urlpatterns = [
+    path('ws-token/', WsTokenView.as_view(), name='ws-token'),
     path("auth/", include("dj_rest_auth.urls")),
     path("auth/registration/", include("dj_rest_auth.registration.urls")),
     path("admin/stats/", AdminStatsView.as_view(), name='admin-stats'),

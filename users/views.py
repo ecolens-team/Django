@@ -13,6 +13,14 @@ from gamification.models import Quest
 from django_filters import rest_framework as filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+from rest_framework_simplejwt.tokens import AccessToken
+
+class WsTokenView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        token = AccessToken.for_user(request.user)
+        return Response({"token": str(token)})
 
 class ResearcherOnlyDemoView(APIView):
     permission_classes = [IsAuthenticated, IsApprovedResearcher]

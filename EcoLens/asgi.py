@@ -1,34 +1,60 @@
-"""
-ASGI config for EcoLens project.
-
-It exposes the ASGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/6.0/howto/deployment/asgi/
-"""
-
 import os
 import django
-from django.core.asgi import get_asgi_application
-from channels.routing import ProtocolTypeRouter, URLRouter
-from channels.auth import AuthMiddlewareStack
-from channels.security.websocket import AllowedHostsOriginValidator  \
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'EcoLens.settings')
 django.setup()
 
+from django.core.asgi import get_asgi_application
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.security.websocket import AllowedHostsOriginValidator
+from channels.middleware import BaseMiddleware
+from channels.db import database_sync_to_async
+from channels.auth import AuthMiddlewareStack
+import users.routing
 
-import users.routing  # noqa
 
+class JWTCookieMiddleware(BaseMiddleware):
 
+    async def __call__(self, scope, receive, send):
+        from django.contrib.auth.models import AnonymousUser
+        scope["user"] = await self.get_user_from_cookie(scope)
+        return await super().__call__(scope, receive, send)
+
+    @database_sync_to_async
+    def get_user_from_cookie(self, scope):
+        from django.contrib.auth.models import AnonymousUser
+        from rest_framework_simplejwt.tokens import AccessToken
+        from users.models import User
+
+        headers = dict(scope.get("headers", []))
+        cookie_header = headers.get(b"cookie", b"").decode()
+
+        token_key = None
+        for part in cookie_header.split(";"):
+            part = part.strip()
+            if part.startswith("jwt-auth="):
+                token_key = part.split("=", 1)[1]
+                break
+
+        if not token_key:
+            return AnonymousUser()
+
+        try:
+            token = AccessToken(token_key)
+            return User.objects.get(id=token["user_id"])
+        except Exception as e:
+            print(f"WS JWT Error: {e}")
+            return AnonymousUser()
 
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
-    "websocket": AllowedHostsOriginValidator(  
+    "websocket": AllowedHostsOriginValidator(
         AuthMiddlewareStack(
-            URLRouter(
-                users.routing.websocket_urlpatterns
+            JWTCookieMiddleware(
+                URLRouter(
+                    users.routing.websocket_urlpatterns
+                )
             )
         )
     ),

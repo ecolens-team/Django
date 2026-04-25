@@ -8,6 +8,7 @@ from .serializers import QuestSerializer
 from users.permissions import IsApprovedResearcher
 from rest_framework.permissions import IsAdminUser
 
+
 class PendingQuestListView(generics.ListAPIView):
     queryset = Quest.objects.filter(status='PENDING')
     serializer_class = QuestSerializer
@@ -42,12 +43,10 @@ class JoinQuestView(APIView):
 
     def post(self, request, quest_id):
         quest = get_object_or_404(Quest, id=quest_id, status='ACTIVE')
-        
         user_quest, created = UserQuest.objects.get_or_create(
             user=request.user,
             quest=quest
         )
-        
         if created:
             return Response({"message": "Successfully joined the quest!"}, status=status.HTTP_201_CREATED)
         return Response({"message": "You have already joined this quest."}, status=status.HTTP_200_OK)
