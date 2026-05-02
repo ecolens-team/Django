@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from imagekit.models import ImageSpecField
-from imagekit.processors import ResizeToFit
+from imagekit.processors import ResizeToFit, Transpose
 
 class Species(models.Model):
     class SpeciesType(models.TextChoices):
@@ -83,7 +83,7 @@ class Image(models.Model):
     date = models.DateTimeField()
     thumbnail = ImageSpecField(
         source='image',
-        processors=[ResizeToFit(1080, 1080)],
+        processors=[Transpose(), ResizeToFit(1080, 1080)],
         format='JPEG',
         options={'quality': 80}
     )

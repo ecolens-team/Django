@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from imagekit.models import ImageSpecField
-from imagekit.processors import ResizeToFit
+from imagekit.processors import ResizeToFit, Transpose
 
 class User(AbstractUser):
     ROLE_CHOICES = (
@@ -16,7 +16,7 @@ class User(AbstractUser):
     profile_picture = models.ImageField(blank=True, null=True, upload_to='profiles/')
     thumbnail = ImageSpecField(
         source='profile_picture',
-        processors=[ResizeToFit(600, 600)],
+        processors=[Transpose(), ResizeToFit(600, 600)],
         format='JPEG',
         options={'quality': 80}
     )
