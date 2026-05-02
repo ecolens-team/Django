@@ -4,19 +4,18 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'EcoLens.settings')
 django.setup()
 
-from django.core.asgi import get_asgi_application
-from channels.routing import ProtocolTypeRouter, URLRouter
-from channels.security.websocket import AllowedHostsOriginValidator
-from channels.middleware import BaseMiddleware
-from channels.db import database_sync_to_async
-from channels.auth import AuthMiddlewareStack
-import users.routing
+from django.core.asgi import get_asgi_application # noqa: E402
+from channels.routing import ProtocolTypeRouter, URLRouter # noqa: E402
+from channels.security.websocket import AllowedHostsOriginValidator # noqa: E402
+from channels.middleware import BaseMiddleware # noqa: E402
+from channels.db import database_sync_to_async # noqa: E402
+from channels.auth import AuthMiddlewareStack # noqa: E402
+import users.routing # noqa: E402
 
 
 class JWTCookieMiddleware(BaseMiddleware):
 
     async def __call__(self, scope, receive, send):
-        from django.contrib.auth.models import AnonymousUser
         scope["user"] = await self.get_user_from_cookie(scope)
         return await super().__call__(scope, receive, send)
 
