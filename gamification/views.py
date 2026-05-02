@@ -1,3 +1,4 @@
+from django.db.models import Count
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -16,6 +17,11 @@ class PendingQuestListView(generics.ListAPIView):
 
 class ActiveQuestListView(generics.ListAPIView):
     queryset = Quest.objects.filter(status='ACTIVE')
+    serializer_class = QuestSerializer
+    permission_classes = [IsAuthenticated]
+
+class QuestDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Quest.objects.all()
     serializer_class = QuestSerializer
     permission_classes = [IsAuthenticated]
 
@@ -50,3 +56,15 @@ class JoinQuestView(APIView):
         if created:
             return Response({"message": "Successfully joined the quest!"}, status=status.HTTP_201_CREATED)
         return Response({"message": "You have already joined this quest."}, status=status.HTTP_200_OK)
+
+class MyQuestsView(generics.ListAPIView):
+    serializer_class = QuestSerializer
+    permission_classes = [IsApprovedResearcher]
+
+    def get_queryset(self):
+        qs = Quest.objects.filter(researcher=self.request.user)
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            qs = qs.filter(status=status_filter.upper())
+        return qs.annotate(participant_count=Count('participants')).order_by('-id')
+

@@ -103,3 +103,21 @@ class Like(models.Model):
 
     def __str__(self):
         return f"Like by {self.user.username} on {self.observation.id}"
+
+
+class ObservationReport(models.Model):
+    observation = models.ForeignKey(Observation, on_delete=models.CASCADE, related_name="reports")
+    reporter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="submitted_reports")
+    note = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved = models.BooleanField(default=False)
+    resolved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="resolved_reports"
+    )
+
+    class Meta:
+        unique_together = ("observation", "reporter")
+
+    def __str__(self):
+        return f"Report by {self.reporter.username} on observation {self.observation_id}"

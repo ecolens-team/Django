@@ -209,7 +209,9 @@ class ObservationsView(ListCreateAPIView):
             'longitude': request.data.get('longitude'),
             'latitude': request.data.get('latitude'),
             'species': species_obj.id,
-            'timestamp': photo_timestamp
+            'timestamp': photo_timestamp,
+            'weather': request.data.get('weather', '') or '',
+            'governorate': request.data.get('governorate', '') or '',
         }
         
         serializer = self.get_serializer(data=data)

@@ -11,6 +11,7 @@ urlpatterns = [
     path("api/species/taxonomy-options/", TaxaOptionsView.as_view(), name="taxa-options"),
     path("api/species/predict/", PredictSpeciesView.as_view(), name="predict"),
     path("api/quests/", include("gamification.urls")),
+    path("api/researcher/", include("researchers.urls")),
     path("api/species/<int:pk>", SpeciesDetailView.as_view(), name="species-detail"),
     path("api/species/<int:pk>/update/", SpeciesUpdateView.as_view(), name="species-update"),
     path("accounts/", include("allauth.urls")),
