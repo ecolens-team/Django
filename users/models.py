@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from imagekit.models import ImageSpecField
+from imagekit.processors import ResizeToFit
 
 class User(AbstractUser):
     ROLE_CHOICES = (
@@ -12,6 +14,12 @@ class User(AbstractUser):
     bio = models.TextField(blank=True, default='')
     phone_number = models.CharField(max_length=20, null=True)
     profile_picture = models.ImageField(blank=True, null=True, upload_to='profiles/')
+    thumbnail = ImageSpecField(
+        source='profile_picture',
+        processors=[ResizeToFit(600, 600)],
+        format='JPEG',
+        options={'quality': 80}
+    )
 
     def save(self, *args, **kwargs):
         if self.role == 'ADMIN':

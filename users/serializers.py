@@ -109,12 +109,21 @@ class UserProfileSerializer(serializers.ModelSerializer):
     observations_count = serializers.SerializerMethodField()
     is_following = serializers.SerializerMethodField()
     name = serializers.SerializerMethodField()
+    profile_thumbnail = serializers.SerializerMethodField()
+
+    def get_profile_thumbnail(self, obj):
+        try:
+            request = self.context.get('request')
+            url = obj.thumbnail.url
+            return request.build_absolute_uri(url) if request else url
+        except Exception:
+            return None
 
     class Meta:
         model = User
         fields = [
             'id', 'name', 'username', 'bio',
-            'profile_picture', 'role',
+            'profile_picture', 'role', 'profile_thumbnail',
             'followers_count', 'following_count',
             'observations_count', 'is_following'
         ]

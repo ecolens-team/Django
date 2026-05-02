@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
+from imagekit.models import ImageSpecField
+from imagekit.processors import ResizeToFit
 
 class Species(models.Model):
     class SpeciesType(models.TextChoices):
@@ -79,6 +81,12 @@ class Image(models.Model):
     image = models.ImageField(upload_to='observations/')
     image_quality = models.IntegerField(null=True, blank=True)
     date = models.DateTimeField()
+    thumbnail = ImageSpecField(
+        source='image',
+        processors=[ResizeToFit(1080, 1080)],
+        format='JPEG',
+        options={'quality': 80}
+    )
 
     def __str__(self):
         return f"Image for Observation {self.observation_id}"

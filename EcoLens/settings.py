@@ -90,11 +90,13 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'storages',
-    
+    'imagekit',
+
     'users',
     'observations',
     'channels',
-    'gamification'
+    'gamification',
+    'researchers'
 ]
 
 MIDDLEWARE = [

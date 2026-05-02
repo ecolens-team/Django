@@ -3,6 +3,7 @@ from datetime import datetime
 from django.utils import timezone
 from django.conf import settings
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView, get_object_or_404
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .models import Observation, Species
 from .serializers import ObservationSerializer, SpeciesSerializer, speciesProfileSerializer, SpeciesUpdateSerializer
@@ -142,10 +143,17 @@ class PredictSpeciesView(APIView):
             print(f"AI Error: {e}")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class FeedPagination(PageNumberPagination):
+    page_size = 12
+    page_size_query_param = 'page_size'
+    max_page_size = 200
+
+
 class ObservationsView(ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
     serializer_class = ObservationSerializer
+    pagination_class = FeedPagination
 
     def get_queryset(self):
         queryset = Observation.objects.all().order_by('-timestamp')

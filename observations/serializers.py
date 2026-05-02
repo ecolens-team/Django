@@ -11,9 +11,19 @@ class SpeciesSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ImageSerializer(serializers.ModelSerializer):
+    thumbnail = serializers.SerializerMethodField()
+
+    def get_thumbnail(self, obj):
+        try:
+            request = self.context.get('request')
+            url = obj.thumbnail.url
+            return request.build_absolute_uri(url) if request else url
+        except Exception:
+            return None
+
     class Meta:
         model = Image
-        fields = ['id', 'image', 'image_quality', 'date']
+        fields = ['id', 'image', 'image_quality', 'date', 'thumbnail']
 
 class ObservationSerializer(serializers.ModelSerializer):
     likes_count = serializers.SerializerMethodField()
