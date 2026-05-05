@@ -3,7 +3,5 @@ ecolens-api.duckdns.org {
         header_up Host {host}
         header_up X-Real-IP {remote_addr}
         
-        header_up Connection {>Connection}
-        header_up Upgrade {>Upgrade}
-    }
+}
 }
