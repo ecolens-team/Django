@@ -2,7 +2,6 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
-from django.db.models import Count
 from rest_framework_simplejwt.tokens import AccessToken
 from .models import Message, User, Conversation
 

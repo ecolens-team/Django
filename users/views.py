@@ -14,7 +14,6 @@ from django_filters import rest_framework as filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.tokens import AccessToken
-from django.db.models import Count
 
 class WsTokenView(APIView):
     permission_classes = [IsAuthenticated]
