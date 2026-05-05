@@ -3,7 +3,7 @@ from rest_framework import serializers
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from dj_rest_auth.serializers import UserDetailsSerializer
 from .models import User, ResearcherProfile
-from .models import Follow
+from .models import Follow, Conversation, Message
 
 class CustomUserDetailsSerializer(UserDetailsSerializer):
     researcher_profile = serializers.SerializerMethodField()
@@ -147,3 +147,38 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 follower=request.user, following=obj
             ).exists()
         return False
+
+class BasicUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'profile_picture']
+
+
+class MessageSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Message
+        fields = ['id', 'timestamp', 'sender', 'receiver', 'content']
+
+
+class ConversationSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+    last_message = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Conversation
+        fields = ['id', 'user', 'last_message', 'updated_at']
+    
+    def get_last_message(self, obj):
+        last = obj.messages.order_by('-timestamp').first()
+        if last:
+            return MessageSerializer(last).data
+        else:
+            return None
+    
+    def get_user(self, obj):
+        req = self.context.get('request')
+        other_user = obj.participants.exclude(id=req.user.id).first()
+
+        return BasicUserSerializer(other_user).data
+

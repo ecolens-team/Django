@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import TemplateView
 from observations.views import PredictSpeciesView, SpeciesDetailView, SpeciesListView, SpeciesUpdateView, TaxaOptionsView
-
+from users.views import ConversationMessages, MyConversationsView
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("users.urls")), 
@@ -15,6 +15,8 @@ urlpatterns = [
     path("api/species/<int:pk>", SpeciesDetailView.as_view(), name="species-detail"),
     path("api/species/<int:pk>/update/", SpeciesUpdateView.as_view(), name="species-update"),
     path("accounts/", include("allauth.urls")),
+    path("api/conversations/", MyConversationsView.as_view(), name="my_conversations"),
+    path("api/conversations/<int:id>/messages/", ConversationMessages.as_view(), name="conversation"),
     path(
         'reset-password/<uidb64>/<token>/', 
         TemplateView.as_view(), 

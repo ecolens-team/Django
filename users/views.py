@@ -4,8 +4,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from .permissions import IsApprovedResearcher
 from rest_framework import permissions, status
-from .models import Follow, ResearcherProfile, ResearcherSpecialization, User
-from .serializers import CustomUserDetailsSerializer, ResearcherApplicationSerializer, UserProfileSerializer
+from .models import Follow, ResearcherProfile, ResearcherSpecialization, User, Conversation, Message
+from .serializers import CustomUserDetailsSerializer, ResearcherApplicationSerializer, UserProfileSerializer, ConversationSerializer, MessageSerializer
 from django.core.mail import send_mail
 from rest_framework.pagination import PageNumberPagination
 from observations.models import Observation, Species
@@ -14,6 +14,7 @@ from django_filters import rest_framework as filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.tokens import AccessToken
+from django.db.models import Count
 
 class WsTokenView(APIView):
     permission_classes = [IsAuthenticated]
@@ -199,3 +200,51 @@ class ResearcherSpecializationsView(APIView):
         data = [{"id": s.pk, "level": s.level, "name": s.name}
                 for s in ResearcherSpecialization.objects.filter(researcher=request.user)]
         return Response(data, status=status.HTTP_200_OK)
+
+class MyConversationsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        my_conversations = Conversation.objects.filter(participants=request.user)
+        serializer = ConversationSerializer(my_conversations, many=True, context={'request':request})
+
+        return Response(serializer.data)
+    
+    def post(self, request):
+        other_id = request.data.get('user_id')
+        other_user = get_object_or_404(User, id=other_id)
+
+        candidates = Conversation.objects.filter(
+            participants=request.user
+        ).filter(participants=other_user)
+
+        existing_convo = next(
+            (c for c in candidates if c.participants.count() == 2), None
+        )
+
+        if existing_convo:
+            return Response(ConversationSerializer(existing_convo, context={'request': request}).data)
+
+        new_convo = Conversation.objects.create()
+        new_convo.participants.add(request.user, other_user)
+        return Response(
+            ConversationSerializer(new_convo, context={'request': request}).data,
+            status=status.HTTP_201_CREATED
+        )
+
+
+class ConversationMessages(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = MessageSerializer
+
+    def get_queryset(self):
+        convo_id=self.kwargs.get('id')
+
+        get_object_or_404(
+            Conversation,
+            id=convo_id, 
+            participants=self.request.user
+        )
+        
+        messages = Message.objects.filter(conversation_id=convo_id).order_by('timestamp')
+        return messages

@@ -6,7 +6,6 @@ django.setup()
 
 from django.core.asgi import get_asgi_application # noqa: E402
 from channels.routing import ProtocolTypeRouter, URLRouter # noqa: E402
-from channels.security.websocket import AllowedHostsOriginValidator # noqa: E402
 from channels.middleware import BaseMiddleware # noqa: E402
 from channels.db import database_sync_to_async # noqa: E402
 from channels.auth import AuthMiddlewareStack # noqa: E402
@@ -48,12 +47,10 @@ class JWTCookieMiddleware(BaseMiddleware):
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
-    "websocket": AllowedHostsOriginValidator(
-        AuthMiddlewareStack(
-            JWTCookieMiddleware(
-                URLRouter(
-                    users.routing.websocket_urlpatterns
-                )
+    "websocket": AuthMiddlewareStack(
+        JWTCookieMiddleware(
+            URLRouter(
+                users.routing.websocket_urlpatterns
             )
         )
     ),

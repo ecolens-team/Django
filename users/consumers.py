@@ -2,8 +2,9 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
+from django.db.models import Count
 from rest_framework_simplejwt.tokens import AccessToken
-from .models import Message, User
+from .models import Message, User, Conversation
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -27,21 +28,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close()
             return
 
+        other_id = next((i for i in ids if i != str(self.user.id)), None)
+        self.conversation = await self.get_or_create_conversation(self.user.id, int(other_id))
+
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
-
-        other_id = next((i for i in ids if i != str(self.user.id)), None)
-        if other_id:
-            try:
-                history = await self.get_history(self.user.id, int(other_id))
-                for msg in history:
-                    await self.send(text_data=json.dumps({
-                        "message": msg.content,
-                        "sender": str(msg.sender_id),
-                        "is_history": True,
-                    }))
-            except Exception as e:
-                print(f"History error: {e}")
 
     async def disconnect(self, close_code):
         if hasattr(self, "room_group_name"):
@@ -106,17 +97,31 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return AnonymousUser()
 
     @database_sync_to_async
-    def get_history(self, user_id, other_id):
-        msgs = Message.objects.filter(
-            sender_id__in=[user_id, other_id],
-            receiver_id__in=[user_id, other_id],
-        ).order_by("-created_at")[:50]
-        return list(reversed(msgs))
+    def get_or_create_conversation(self, user_id, other_id):
+        candidates = Conversation.objects.filter(
+            participants__id=user_id
+        ).filter(
+            participants__id=other_id
+        )
+        for convo in candidates:
+            if convo.participants.count() == 2:
+                return convo
+
+        user = User.objects.get(id=user_id)
+        other = User.objects.get(id=other_id)
+        convo = Conversation.objects.create()
+        convo.participants.add(user, other)
+        return convo
 
     @database_sync_to_async
     def save_message(self, sender_id, receiver_id, content):
         sender = User.objects.get(id=sender_id)
         receiver = User.objects.get(id=receiver_id)
-        return Message.objects.create(
-            sender=sender, receiver=receiver, content=content
+        msg = Message.objects.create(
+            conversation=self.conversation,
+            sender=sender,
+            receiver=receiver,
+            content=content,
         )
+        self.conversation.save()
+        return msg
