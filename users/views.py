@@ -14,6 +14,8 @@ from django_filters import rest_framework as filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.tokens import AccessToken
+from .models import Notification
+from .serializers import NotificationSerializer
 
 class WsTokenView(APIView):
     permission_classes = [IsAuthenticated]
@@ -247,3 +249,25 @@ class ConversationMessages(ListAPIView):
         
         messages = Message.objects.filter(conversation_id=convo_id).order_by('timestamp')
         return messages
+
+
+class NotificationListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        notifs = Notification.objects.filter(
+            recipient=request.user
+        ).select_related('sender')[:40]
+        return Response(NotificationSerializer(notifs, many=True).data)
+
+
+class MarkNotificationReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        Notification.objects.filter(pk=pk, recipient=request.user).update(is_read=True)
+        return Response({"status": "ok"})
+
+    def delete(self, request):
+        Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+        return Response({"status": "all marked read"})

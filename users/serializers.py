@@ -4,6 +4,8 @@ from dj_rest_auth.registration.serializers import RegisterSerializer
 from dj_rest_auth.serializers import UserDetailsSerializer
 from .models import User, ResearcherProfile
 from .models import Follow, Conversation, Message
+from .models import Notification
+
 
 class CustomUserDetailsSerializer(UserDetailsSerializer):
     researcher_profile = serializers.SerializerMethodField()
@@ -182,3 +184,18 @@ class ConversationSerializer(serializers.ModelSerializer):
 
         return BasicUserSerializer(other_user).data
 
+
+class NotificationSerializer(serializers.ModelSerializer):
+    sender_username = serializers.ReadOnlyField(source='sender.username')
+    sender_picture  = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Notification
+        fields = ['id', 'notif_type', 'sender_username', 'sender_picture',
+                  'message', 'content_id', 'is_read', 'created_at']
+
+    def get_sender_picture(self, obj):
+        try:
+            return obj.sender.profile_picture.url
+        except Exception:
+            return None

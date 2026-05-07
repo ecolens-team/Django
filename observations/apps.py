@@ -16,3 +16,6 @@ class ObservationsConfig(AppConfig):
         if not is_management_cmd:
             from observations.views import _load_ai
             _load_ai()
+
+    def ready(self):
+        import observations.signals  

@@ -1,5 +1,9 @@
 from django.urls import path, include
 from .views import WsTokenView
+from django.urls import re_path
+from . import consumers
+from .views import NotificationListView, MarkNotificationReadView
+
 
 from .views import (
     ResearcherOnlyDemoView,
@@ -26,4 +30,17 @@ urlpatterns = [
     path('users/', GetUsersView.as_view(), name='user-list'),
     path('users/<int:user_id>/toggle-active/', ToggleUserActiveView.as_view(), name='toggle-user'),
     path('me/specializations/', ResearcherSpecializationsView.as_view(), name='my-specializations'),
+]
+
+
+websocket_urlpatterns = [
+    re_path(r'ws/chat/(?P<room_name>[^/]+)/$', consumers.ChatConsumer.as_asgi()),
+    re_path(r'ws/notifications/$', consumers.NotificationConsumer.as_asgi()),
+]
+from .views import NotificationListView, MarkNotificationReadView
+
+urlpatterns += [
+    path('notifications/', NotificationListView.as_view(), name='notifications'),
+    path('notifications/<int:pk>/read/', MarkNotificationReadView.as_view(), name='notif-read'),
+    path('notifications/read-all/', MarkNotificationReadView.as_view(), name='notif-read-all'),
 ]

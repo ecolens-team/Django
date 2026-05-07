@@ -105,3 +105,24 @@ class Message(models.Model):
 
     def __str__(self):
         return f"{self.sender.username} to {self.receiver.username}: {self.content[:20]}"
+
+class Notification(models.Model):
+    TYPE_CHOICES = [
+        ('like', 'Like'),
+        ('comment', 'Comment'),
+        ('message', 'Message'),
+        ('follow', 'Follow'),
+    ]
+    recipient  = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    sender     = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications')
+    notif_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    content_id = models.PositiveIntegerField(null=True, blank=True)
+    message    = models.TextField(blank=True)
+    is_read    = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.sender} → {self.recipient}: {self.notif_type}"          

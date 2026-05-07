@@ -12,16 +12,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-2ys=m@!9m4q97=gosk70zg+@u+2klhgpw^+!sqhk=w^c((9ic&')
-
 
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
@@ -45,12 +38,10 @@ STORAGES = {
 
 MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/"
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')
 ALLOWED_HOSTS += ['localhost', '127.0.0.1', 'ecolens-api.duckdns.org']
-
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -61,15 +52,12 @@ AUTHENTICATION_BACKENDS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'dj_rest_auth.jwt_auth.JWTCookieAuthentication', 
+        'dj_rest_auth.jwt_auth.JWTCookieAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     )
-
 }
-
-# Application definition
 
 INSTALLED_APPS = [
     'daphne',
@@ -91,7 +79,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'storages',
     'imagekit',
-
     'users',
     'observations',
     'channels',
@@ -115,7 +102,7 @@ MIDDLEWARE = [
 SITE_ID = 1
 
 ACCOUNT_EMAIL_VERIFICATION = 'none'
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email' 
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_LOGIN_METHODS = {'email', 'username'}
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = True
@@ -123,8 +110,6 @@ ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 
 PASSWORD_RESET_USE_SITES_DOMAIN = False
 PASSWORD_RESET_CONFIRM_URL = "reset-password/{uid}/{token}"
-
-_is_production = not DEBUG
 
 REST_AUTH = {
     'USE_JWT': True,
@@ -136,37 +121,32 @@ REST_AUTH = {
     'REGISTER_SERIALIZER': "users.serializers.CustomRegisterSerializer",
     "USER_DETAILS_SERIALIZER": "users.serializers.CustomUserDetailsSerializer",
 }
+
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 DEFAULT_FROM_EMAIL = "noreply@ecolens.local"
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
-    "SCOPE": ["profile", "email"],
-    "AUTH_PARAMS": {
-        "access_type": "online",
-    },
-    "OAUTH_PKCE_ENABLED": True,
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
+        "OAUTH_PKCE_ENABLED": True,
     }
 }
 
-_cors_origins = os.environ.get(
-    'CORS_ALLOWED_ORIGINS',
-    'https://ecolens-api.duckdns.org,http://localhost:3000,https://gp2-frontend.vercel.app'
-).split(',')
-
-CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins]
-
-CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
-
-CSRF_TRUSTED_ORIGINS = [
-    "https://ecolens-api.duckdns.org",
-    "https://gp2-frontend.vercel.app",
+CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "https://gp2-frontend.vercel.app",
+    "https://ecolens-api.duckdns.org",
 ]
 
-CORS_ALLOWED_ORIGINS = CSRF_TRUSTED_ORIGINS
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+
+CORS_ALLOW_CREDENTIALS = True
+
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 ROOT_URLCONF = 'EcoLens.urls'
 
 TEMPLATES = [
@@ -186,18 +166,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'EcoLens.wsgi.application'
 ASGI_APPLICATION = 'EcoLens.asgi.application'
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-       "hosts": [(os.environ.get("REDIS_HOST", "redis"), int(os.environ.get("REDIS_PORT", 6379)))],
+            "hosts": [(os.environ.get("REDIS_HOST", "redis"), int(os.environ.get("REDIS_PORT", 6379)))],
         },
     },
 }
-
-
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
     'default': {
@@ -210,43 +187,17 @@ DATABASES = {
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-
-

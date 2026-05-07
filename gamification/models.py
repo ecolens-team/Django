@@ -47,3 +47,6 @@ class UserBadge(models.Model):
 
     class Meta:
         unique_together = ('user', 'badge')
+
+
+   
