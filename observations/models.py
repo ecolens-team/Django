@@ -60,7 +60,8 @@ class Observation(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='observations')
     species = models.ForeignKey(Species, on_delete=models.SET_NULL, null=True, blank=True, related_name='observations')
-    timestamp = models.DateTimeField(auto_now_add=True)
+    quest = models.ForeignKey('gamification.Quest', on_delete=models.SET_NULL, null=True, blank=True, related_name='observations')
+    timestamp = models.DateTimeField()
     longitude = models.FloatField(null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)
     governorate = models.CharField(max_length=50, choices=GOV_CHOICES, blank=True, null=True)

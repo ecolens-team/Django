@@ -1,7 +1,20 @@
-ecolens-api.duckdns.org {
-    reverse_proxy web:8000 {
-        header_up Host {host}
-        header_up X-Real-IP {remote_addr}
-        
+{
+    debug
 }
+
+ecolens-api.duckdns.org {
+    @websockets path /ws/*
+
+    handle @websockets {
+        header X-Debug-Match "websocket"
+        reverse_proxy web:8000 {
+            header_up Connection "Upgrade"
+            header_up Upgrade "websocket"
+        }
+    }
+
+    handle {
+        header X-Debug-Match "fallthrough"
+        reverse_proxy web:8000
+    }
 }

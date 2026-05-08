@@ -298,7 +298,12 @@ class TaxaOptionsView(APIView):
         options = None
 
         if level == 'species':
-            options = Species.objects.filter(scientific_name__icontains=q).values_list('scientific_name', flat=True).distinct()[0:10]
+            with_ids = request.query_params.get('with_ids') == 'true'
+            qs = Species.objects.filter(scientific_name__icontains=q).distinct()[:10]
+            if with_ids:
+                options = [{'id': s.id, 'name': s.scientific_name} for s in qs]
+            else:
+                options = list(qs.values_list('scientific_name', flat=True))
         elif level == 'genus':
             options = Species.objects.filter(genus__icontains=q).values_list('genus', flat=True).distinct()[0:10]
         elif level == 'family':

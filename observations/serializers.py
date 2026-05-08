@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Observation, Species, Image, Comment, Like
-from users.serializers import CustomUserDetailsSerializer
+from users.serializers import BasicUserSerializer
 from django.db.models import Count, Max, Q
 from django.db.models.functions import ExtractMonth
 from django.core.files.storage import default_storage
@@ -29,19 +29,25 @@ class ObservationSerializer(serializers.ModelSerializer):
     likes_count = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
     has_liked = serializers.SerializerMethodField()
+    assigned_quest = serializers.SerializerMethodField()
 
-    images = ImageSerializer(many=True, read_only=True) 
+    images = ImageSerializer(many=True, read_only=True)
     species = SpeciesSerializer(read_only=True)
-    user = CustomUserDetailsSerializer(read_only=True)
+    user = BasicUserSerializer(read_only=True)
 
     class Meta:
         model = Observation
         fields = [
-            'id', 'user', 'species', 'timestamp', 'longitude', 
+            'id', 'user', 'species', 'timestamp', 'longitude',
             'latitude', 'description', 'confidence_level', 'verified', 'images', 'governorate', 'weather',
-            'likes_count', 'comments_count', 'has_liked'
+            'likes_count', 'comments_count', 'has_liked', 'assigned_quest'
         ]
         read_only_fields = ['user', 'confidence_level', 'verified']
+
+    def get_assigned_quest(self, obj):
+        if obj.quest_id is None:
+            return None
+        return {'id': obj.quest_id, 'title': obj.quest.title}
 
     def get_likes_count(self, obj):
         return obj.likes.count()
@@ -54,6 +60,17 @@ class ObservationSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.likes.filter(user=request.user).exists()
         return False
+
+class BasicObservationSerializer(serializers.ModelSerializer):
+    images = ImageSerializer(many=True, read_only=True)
+    user = BasicUserSerializer(read_only=True)
+    class Meta:
+        model = Observation
+        fields = [
+            'id', 'user', 'species', 'timestamp', 'longitude',
+            'latitude', 'images'
+        ]
+        read_only_fields = ['user']
 
 class speciesProfileSerializer(serializers.ModelSerializer):
     scientificName = serializers.CharField(source='scientific_name')
@@ -212,7 +229,7 @@ class SpeciesUpdateSerializer(serializers.ModelSerializer):
         fields = ['description', 'description_is_verified', 'is_endangered', 'is_invasive', 'is_endemic', 'common_name_en', 'common_name_ar']
 
 class CommentSerializer(serializers.ModelSerializer):
-    user = CustomUserDetailsSerializer(read_only=True)
+    user = BasicUserSerializer(read_only=True)
 
     class Meta:
         model = Comment

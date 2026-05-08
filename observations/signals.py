@@ -1,6 +1,6 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .models import Like, Comment
+from .models import Like, Comment, Observation
 
 
 @receiver(post_save, sender=Like)
@@ -37,3 +37,11 @@ def notify_comment(sender, instance, created, **kwargs):
         message=f"{instance.user.username} commented on your observation",
     )
     push_notification(notif)
+
+
+@receiver(post_save, sender=Observation)
+def check_observation_badges(sender, instance, created, **kwargs):
+    if not created or not instance.user_id or not instance.species_id:
+        return
+    from gamification.badge_utils import check_badges_on_observation
+    check_badges_on_observation(instance.user, instance.species)

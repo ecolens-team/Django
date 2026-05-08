@@ -1,2 +1,5 @@
+from django.contrib import admin
+from .models import Quest, Badge
 
-# Register your models here.
+admin.site.register(Quest)
+admin.site.register(Badge)

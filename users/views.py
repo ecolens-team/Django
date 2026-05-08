@@ -16,6 +16,10 @@ from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.tokens import AccessToken
 from .models import Notification
 from .serializers import NotificationSerializer
+from django.db.models.functions import TruncMonth
+from django.db.models import Count
+from django.utils import timezone
+import datetime
 
 class WsTokenView(APIView):
     permission_classes = [IsAuthenticated]
@@ -153,6 +157,26 @@ class AdminStatsView(APIView):
                 "without_observations": total_species - species_with_obs,
             },
         })
+
+
+class ObservationsOverTimeView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request):
+        since = timezone.now() - datetime.timedelta(days=365)
+        rows = (
+            Observation.objects
+            .filter(timestamp__gte=since)
+            .annotate(month=TruncMonth('timestamp'))
+            .values('month')
+            .annotate(count=Count('id'))
+            .order_by('month')
+        )
+        data = [
+            {"month": row["month"].strftime("%b %Y"), "count": row["count"]}
+            for row in rows
+        ]
+        return Response(data)
 
 
 class ToggleUserActiveView(APIView):

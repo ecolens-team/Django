@@ -7,7 +7,8 @@ class ObservationsConfig(AppConfig):
     name = 'observations'
 
     def ready(self):
-        # Skip AI loading for management commands (migrate, seed_species, etc.)
+
+        # Skip AI loading for management commands (migrate, collectstatic, etc.)
         is_management_cmd = (
             len(sys.argv) >= 2
             and 'manage.py' in sys.argv[0]
@@ -16,6 +17,3 @@ class ObservationsConfig(AppConfig):
         if not is_management_cmd:
             from observations.views import _load_ai
             _load_ai()
-
-    def ready(self):
-        import observations.signals  

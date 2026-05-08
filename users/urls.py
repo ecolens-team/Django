@@ -4,7 +4,6 @@ from django.urls import re_path
 from . import consumers
 from .views import NotificationListView, MarkNotificationReadView
 
-
 from .views import (
     ResearcherOnlyDemoView,
     ResearcherApplicationsListView,
@@ -15,6 +14,7 @@ from .views import (
     ToggleUserActiveView,
     AdminStatsView,
     ResearcherSpecializationsView,
+    ObservationsOverTimeView,
 )
 
 urlpatterns = [
@@ -22,6 +22,7 @@ urlpatterns = [
     path("auth/", include("dj_rest_auth.urls")),
     path("auth/registration/", include("dj_rest_auth.registration.urls")),
     path("admin/stats/", AdminStatsView.as_view(), name='admin-stats'),
+    path("admin/stats/observations-over-time/", ObservationsOverTimeView.as_view(), name='admin-observations-over-time'),
     path("admin/applications/", ResearcherApplicationsListView.as_view(), name='admin-researcher-applications'),
     path("admin/applications/<int:pk>/review/", ReviewResearcherApplicationView.as_view(), name='admin-researcher-application-review'),
     path('researcher-only/', ResearcherOnlyDemoView.as_view(), name='reseracher-only'),
@@ -37,7 +38,6 @@ websocket_urlpatterns = [
     re_path(r'ws/chat/(?P<room_name>[^/]+)/$', consumers.ChatConsumer.as_asgi()),
     re_path(r'ws/notifications/$', consumers.NotificationConsumer.as_asgi()),
 ]
-from .views import NotificationListView, MarkNotificationReadView
 
 urlpatterns += [
     path('notifications/', NotificationListView.as_view(), name='notifications'),
