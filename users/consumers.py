@@ -127,7 +127,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 class NotificationConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
-        user = self.scope.get("user")
+        user = await self.get_user_from_token()
         if not user or not user.is_authenticated:
             await self.close()
             return
@@ -141,3 +141,21 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
     async def send_notification(self, event):
         await self.send(text_data=json.dumps(event["data"]))
+
+    @database_sync_to_async
+    def get_user_from_token(self):
+        from urllib.parse import parse_qs
+        from django.contrib.auth.models import AnonymousUser
+        from rest_framework_simplejwt.tokens import AccessToken
+
+        query_string = self.scope.get("query_string", b"").decode()
+        token_key = parse_qs(query_string).get("token", [None])[0]
+
+        if not token_key:
+            return self.scope.get("user", AnonymousUser())
+
+        try:
+            token = AccessToken(token_key)
+            return User.objects.get(id=token["user_id"])
+        except Exception:
+            return AnonymousUser()
