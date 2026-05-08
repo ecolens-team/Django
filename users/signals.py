@@ -13,7 +13,7 @@ def push_notification(notification):
             "data": {
                 "id": notification.id,
                 "notif_type": notification.notif_type,
-                "sender": notification.sender.username,
+                "sender_username": notification.sender.username,
                 "sender_picture": notification.sender.profile_picture.url
                     if notification.sender.profile_picture else None,
                 "message": notification.message,
