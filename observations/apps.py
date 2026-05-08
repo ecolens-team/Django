@@ -7,6 +7,7 @@ class ObservationsConfig(AppConfig):
     name = 'observations'
 
     def ready(self):
+        import observations.signals  # noqa: F401
 
         # Skip AI loading for management commands (migrate, collectstatic, etc.)
         is_management_cmd = (
