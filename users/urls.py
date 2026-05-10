@@ -15,6 +15,8 @@ from .views import (
     AdminStatsView,
     ResearcherSpecializationsView,
     ObservationsOverTimeView,
+    MyConversationsView,
+    ConversationMessages,
 )
 
 urlpatterns = [
@@ -31,6 +33,8 @@ urlpatterns = [
     path('users/', GetUsersView.as_view(), name='user-list'),
     path('users/<int:user_id>/toggle-active/', ToggleUserActiveView.as_view(), name='toggle-user'),
     path('me/specializations/', ResearcherSpecializationsView.as_view(), name='my-specializations'),
+    path('conversations/', MyConversationsView.as_view(), name='my_conversations'),
+    path('conversations/<int:id>/messages/', ConversationMessages.as_view(), name='conversation'),
 ]
 
 

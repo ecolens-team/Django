@@ -1,25 +1,18 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import TemplateView
-from observations.views import PredictSpeciesView, SpeciesDetailView, SpeciesListView, SpeciesUpdateView, TaxaOptionsView
-from users.views import ConversationMessages, MyConversationsView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/", include("users.urls")), 
+    path("api/", include("users.urls")),
     path("api/observations/", include("observations.urls")),
-    path("api/species/", SpeciesListView.as_view(), name="species"),
-    path("api/species/taxonomy-options/", TaxaOptionsView.as_view(), name="taxa-options"),
-    path("api/species/predict/", PredictSpeciesView.as_view(), name="predict"),
+    path("api/species/", include("observations.species_urls")),
     path("api/quests/", include("gamification.urls")),
     path("api/researcher/", include("researchers.urls")),
-    path("api/species/<int:pk>", SpeciesDetailView.as_view(), name="species-detail"),
-    path("api/species/<int:pk>/update/", SpeciesUpdateView.as_view(), name="species-update"),
     path("accounts/", include("allauth.urls")),
-    path("api/conversations/", MyConversationsView.as_view(), name="my_conversations"),
-    path("api/conversations/<int:id>/messages/", ConversationMessages.as_view(), name="conversation"),
     path(
-        'reset-password/<uidb64>/<token>/', 
-        TemplateView.as_view(), 
+        'reset-password/<uidb64>/<token>/',
+        TemplateView.as_view(),
         name='password_reset_confirm'
     ),
 ]
