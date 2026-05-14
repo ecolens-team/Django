@@ -1,2 +1,5 @@
+from django.contrib import admin
+from users.models import ResearcherProfile, ResearcherSpecialization
 
-# Register your models here.
+admin.site.register(ResearcherSpecialization)
+admin.site.register(ResearcherProfile)
