@@ -19,6 +19,7 @@ pytest
 pytest-django
 bandit
 ruff
+pip-audit
 
 django-storages
 boto3
