@@ -26,6 +26,16 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -54,7 +64,8 @@ jobs:
           DB_PASSWORD: ecolens_pass
           DB_HOST: localhost
           DB_PORT: '5432'
-        # exit code 5 = no tests collected, treat as pass until tests are written
+          REDIS_HOST: localhost
+          REDIS_PORT: '6379'
         run: pytest --ignore=venv || [ $? -eq 5 ]
 
   publish:
