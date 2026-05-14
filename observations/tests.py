@@ -5,6 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from .models import Observation, Species, Like
 from django.contrib.auth import get_user_model
+from users.models import ResearcherProfile
 
 User = get_user_model()
 
@@ -15,10 +16,11 @@ class CoreObservationTests(APITestCase):
         
 
         self.researcher = User.objects.create_user(
-            username='expert_just', 
-            password='password123', 
+            username='expert_just',
+            password='password123',
             role='RESEARCHER'
         )
+        ResearcherProfile.objects.create(user=self.researcher, application_status='APPROVED')
         self.species = Species.objects.create(scientific_name="Iris haynei", type="PLANT")
         
        

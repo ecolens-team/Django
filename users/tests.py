@@ -69,10 +69,16 @@ class UserManagementTests(APITestCase):
         )
         
         
-        url = reverse('reseracher-only') 
+        url = reverse('researcher-only') 
         self.client.force_authenticate(user=researcher_user)
         
         response = self.client.get(url)
         
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        profile.application_status = 'APPROVED'
+        profile.save()
+        
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 # Create your tests here.

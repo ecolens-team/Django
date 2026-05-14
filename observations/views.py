@@ -162,9 +162,12 @@ class ObservationsView(ListCreateAPIView):
         species = self.request.query_params.get("species")
         min_confidence = self.request.query_params.get("min_confidence")
         ordering = self.request.query_params.get("ordering")
+        governorate = self.request.query_params.get("governorate")
 
         if user:
             queryset = queryset.filter(user__username=user)
+        if governorate:
+            queryset = queryset.filter(governorate=governorate)
         if species:
             queryset = queryset.filter(
                 species__common_name_en__icontains=species

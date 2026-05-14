@@ -1,13 +1,13 @@
 
 
 
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
 from users.models import ResearcherSpecialization, ResearcherProfile
 from observations.models import Observation, ObservationReport, Species
-from django.utilfrom django.utils 
-import timezones import timezone
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -29,7 +29,7 @@ class ResearcherAppTests(APITestCase):
           verified=False,
           timestamp=timezone.now() 
          )      
-        self.insect_obs = Observation.objects.create(user=self.researcher, species=self.insect_species, verified=False)
+        self.insect_obs = Observation.objects.create(user=self.researcher, species=self.insect_species, verified=False, timestamp=timezone.now())
 
     
     def test_researcher_sees_only_specialized_observations(self):
@@ -65,7 +65,6 @@ class ResearcherAppTests(APITestCase):
         
         self.assertEqual(response.data['queue_count'], 1)
 
-   )
     def test_endangered_species_alerts(self):
         
         self.plant_species.is_endangered = True
