@@ -1,0 +1,17 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Data (reconstructed from GBIF, too large for git)
+*.csv
+image-data/
+combined_data/
+*.zip
+
+# Model weights / checkpoints
+*.pth
+*.pt
+*.safetensors
+checkpoints/
+ecolens_checkpoints/

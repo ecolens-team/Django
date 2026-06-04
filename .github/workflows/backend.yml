@@ -50,10 +50,10 @@ jobs:
         run: pip install --upgrade pip wheel && pip install -r requirements.txt
 
       - name: Lint with ruff
-        run: ruff check . --exclude venv
+        run: ruff check . --exclude venv,ai
 
       - name: Security check with bandit
-        run: bandit -r . -x venv -ll
+        run: bandit -r . -x venv,ai -ll
 
       - name: Audit dependencies for CVEs
         run: pip-audit
