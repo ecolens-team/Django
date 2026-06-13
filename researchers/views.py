@@ -126,6 +126,24 @@ class ResearcherQueueView(APIView):
 
 
 
+class ResearcherVerifiedView(APIView):
+    permission_classes = [IsResearcherOrAdmin]
+
+    def get(self, request):
+        observations = (
+            Observation.objects
+            .filter(verified=True, verified_by=request.user)
+            .select_related('species', 'user')
+            .prefetch_related('images')
+            .annotate(report_count=Count('reports', filter=Q(reports__resolved=False)))
+            .order_by('-timestamp')
+        )
+        paginator = QueuePagination()
+        page = paginator.paginate_queryset(observations, request)
+        serializer = ObservationQueueSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
 class ResearcherReportsView(APIView):
     permission_classes = [IsResearcherOrAdmin]
 

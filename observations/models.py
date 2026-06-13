@@ -72,6 +72,10 @@ class Observation(models.Model):
         validators=[MinValueValidator(0.0), MaxValueValidator(1.0)]
     )
     verified = models.BooleanField(default=False)
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='verified_observations'
+    )
 
     def __str__(self):
         return f"Observation {self.id} by {self.user.username}"

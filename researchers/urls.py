@@ -2,6 +2,7 @@ from django.urls import path
 from .views import (
     ResearcherStatsView,
     ResearcherQueueView,
+    ResearcherVerifiedView,
     ResearcherReportsView,
     ResolveReportView,
     ResearcherInsightsView,
@@ -13,6 +14,7 @@ from .views import (
 urlpatterns = [
     path('stats/',                          ResearcherStatsView.as_view(),       name='researcher-stats'),
     path('queue/',                          ResearcherQueueView.as_view(),        name='researcher-queue'),
+    path('verified/',                       ResearcherVerifiedView.as_view(),     name='researcher-verified'),
     path('reports/',                        ResearcherReportsView.as_view(),      name='researcher-reports'),
     path('reports/<int:pk>/resolve/',       ResolveReportView.as_view(),          name='researcher-resolve-report'),
     path('insights/',                       ResearcherInsightsView.as_view(),     name='researcher-insights'),

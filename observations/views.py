@@ -263,6 +263,7 @@ class VerifyObservationView(UpdateAPIView):
             new_species = Species.objects.get(id=new_species_id)
             observation.species = new_species
             observation.verified = True
+            observation.verified_by = request.user
             observation.save()
             return Response({"message": "Observation verified and updated successfully"})
             
